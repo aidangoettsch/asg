@@ -7,8 +7,8 @@ import output.text
 
 def main():
     inp = InputIL()
-    # res = asg.asg_naive(inp)
-    res = asg.asg_ltr(inp)
+    res = asg.asg_naive(inp)
+    # res = asg.asg_ltr(inp)
     with open("output.json", "w+") as out:
         output.json.il_to_json(res, out)
     with open("output.ps", "w+") as out:
