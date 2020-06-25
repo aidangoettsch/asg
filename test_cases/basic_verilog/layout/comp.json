@@ -1,0 +1,68 @@
+[
+  {
+   "pins": [
+      [
+        "A",
+        "gnd",
+        "Y",
+        "vdd"
+      ], [
+        "A",
+        "gnd",
+        "Y",
+        "vdd"
+      ]
+   ]
+  },
+  {
+   "pins": [
+      [
+        "A",
+        "gnd",
+        "Y",
+        "vdd"
+      ], [
+        "A",
+        "gnd",
+        "Y",
+        "vdd"
+      ]
+   ]
+  },
+  {
+   "name": [
+      "basic",
+      "basic"
+   ],
+   "devices": [
+       [
+         ["BUFX2", 1],
+         ["INVX1", 1 ]
+       ], [
+         ["BUFX2", 1 ],
+         ["INVX1", 1 ]
+       ]
+   ],
+   "nets": [
+    5,
+    5
+   ],
+   "badnets": [
+   ],
+   "badelements": [
+   ],
+   "pins": [
+      [
+        "a",
+        "o",
+        "vdd",
+        "gnd"
+      ], [
+        "a",
+        "o",
+        "vdd",
+        "gnd"
+      ]
+   ]
+  }
+]

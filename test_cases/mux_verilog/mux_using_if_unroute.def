@@ -1,0 +1,64 @@
+VERSION 5.6 ;
+DIVIDERCHAR "/" ;
+BUSBITCHARS "[]" ;
+DESIGN mux_using_if ;
+UNITS DISTANCE MICRONS 100 ;
+
+DIEAREA ( -480 0 ) ( 35303 2200 ) ;
+
+TRACKS Y 0 DO 12 STEP 200 LAYER metal1 ;
+TRACKS X -480 DO 225 STEP 160 LAYER metal2 ;
+TRACKS Y 0 DO 12 STEP 200 LAYER metal3 ;
+TRACKS X -480 DO 225 STEP 160 LAYER metal4 ;
+
+VIAS 0 ;
+END VIAS
+
+COMPONENTS 4 ;
+- _6_ BUFX2 + PLACED ( 80 100 ) S ;
+- _4_ NAND2X1 + PLACED ( 560 100 ) FS ;
+- _5_ OAI21X1 + PLACED ( 1040 100 ) S ;
+- _3_ INVX1 + PLACED ( 1680 100 ) S ;
+END COMPONENTS
+
+PINS 4 ;
+- din_0 + NET din_0
+  + LAYER metal3 ( -30 -30 ) ( 30 30 )
+  + PLACED ( 17280 1800 ) N ;
+- din_1 + NET din_1
+  + LAYER metal3 ( -30 -30 ) ( 30 30 )
+  + PLACED ( -320 1000 ) N ;
+- mux_out + NET mux_out
+  + LAYER metal3 ( -30 -30 ) ( 30 30 )
+  + PLACED ( -320 600 ) N ;
+- sel + NET sel
+  + LAYER metal3 ( -30 -30 ) ( 30 30 )
+  + PLACED ( 2400 1400 ) N ;
+END PINS
+
+NETS 7 ;
+- din_0
+  ( PIN din_0 ) 
+  ( _3_ A ) ;
+- _0_
+  ( _5_ B ) 
+  ( _3_ Y ) ;
+- din_1
+  ( PIN din_1 ) 
+  ( _4_ A ) ;
+- sel
+  ( PIN sel ) 
+  ( _5_ A ) 
+  ( _4_ B ) ;
+- _1_
+  ( _5_ C ) 
+  ( _4_ Y ) ;
+- _2_
+  ( _6_ A ) 
+  ( _5_ Y ) ;
+- mux_out
+  ( PIN mux_out ) 
+  ( _6_ Y ) ;
+END NETS
+
+END DESIGN

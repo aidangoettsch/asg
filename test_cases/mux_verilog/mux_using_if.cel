@@ -1,0 +1,51 @@
+cell 1 INVX1:_3_
+left -160 right 160 bottom -1000 top 1000
+pin name twfeed1 signal TW_PASS_THRU layer 1 80 -1000
+   equiv name twfeed1 layer 1 80 1000
+pin name A signal din_0 layer 1 -80 -540
+pin name Y signal _0_ layer 1 80 0
+cell 2 NAND2X1:_4_
+left -240 right 240 bottom -1000 top 1000
+pin name twfeed1 signal TW_PASS_THRU layer 1 0 -1000
+   equiv name twfeed1 layer 1 0 1000
+pin name twfeed2 signal TW_PASS_THRU layer 1 160 -1000
+   equiv name twfeed2 layer 1 160 1000
+pin name A signal din_1 layer 1 -160 -340
+pin name B signal sel layer 1 160 140
+pin name Y signal _1_ layer 1 100 -680
+cell 3 OAI21X1:_5_
+left -320 right 320 bottom -1000 top 1000
+pin name twfeed1 signal TW_PASS_THRU layer 1 -80 -1000
+   equiv name twfeed1 layer 1 -80 1000
+pin name twfeed2 signal TW_PASS_THRU layer 1 80 -1000
+   equiv name twfeed2 layer 1 80 1000
+pin name twfeed3 signal TW_PASS_THRU layer 1 240 -1000
+   equiv name twfeed3 layer 1 240 1000
+pin name A signal sel layer 1 -160 -330
+pin name B signal _0_ layer 1 -80 -140
+pin name C signal _1_ layer 1 160 300
+pin name Y signal _2_ layer 1 50 -100
+cell 4 BUFX2:_6_
+left -240 right 240 bottom -1000 top 1000
+pin name twfeed1 signal TW_PASS_THRU layer 1 0 -1000
+   equiv name twfeed1 layer 1 0 1000
+pin name twfeed2 signal TW_PASS_THRU layer 1 160 -1000
+   equiv name twfeed2 layer 1 160 1000
+pin name A signal _2_ layer 1 -160 -140
+pin name Y signal mux_out layer 1 170 0
+pad 1 name twpin_din_0
+corners 4 -80 -200 -80 200 80 200 80 -200
+pin name din_0 signal din_0 layer 1 0 0
+
+pad 2 name twpin_din_1
+corners 4 -80 -200 -80 200 80 200 80 -200
+pin name din_1 signal din_1 layer 1 0 0
+
+pad 3 name twpin_mux_out
+corners 4 -80 -200 -80 200 80 200 80 -200
+pin name mux_out signal mux_out layer 1 0 0
+
+pad 4 name twpin_sel
+corners 4 -80 -200 -80 200 80 200 80 -200
+pin name sel signal sel layer 1 0 0
+

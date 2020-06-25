@@ -1,0 +1,25 @@
+(DELAYFILE
+   (SDFVERSION "3.0")
+   (DESIGN "mux_using_if")
+   (DATE "21:08:28 Wednesday June 24, 2020")
+   (VENDOR "unknown")
+   (PROGRAM "qrouter")
+   (VERSION "unknown")
+   (DIVIDER /)
+   (TIMESCALE 1 ps)
+   (CELL
+      (CELLTYPE "mux_using_if")
+      (INSTANCE)
+      (DELAY
+         (ABSOLUTE
+            (INTERCONNECT sel _4_/B (0.000441294))
+            (INTERCONNECT sel _5_/A (0.000286454))
+            (INTERCONNECT _3_/Y _5_/B (0.000134784))
+            (INTERCONNECT din_1 _4_/A (0.000325442))
+            (INTERCONNECT _4_/Y _5_/C (0.000321025))
+            (INTERCONNECT _5_/Y _6_/A (0.00017856))
+            (INTERCONNECT _6_/Y ERROR (0.000201216))
+         )
+      )
+   )
+)

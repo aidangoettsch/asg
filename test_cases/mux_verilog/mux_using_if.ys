@@ -1,0 +1,24 @@
+# Synthesis script for yosys created by qflow
+read_liberty -lib -ignore_miss_dir -setattr blackbox /usr/local/share/qflow/tech/osu035/osu035_stdcells.lib
+read_verilog  /mnt/data/Code/Internship-2020/asg/test_cases/mux_verilog/mux_using_if.v
+
+# High-level synthesis
+synth -top mux_using_if
+# Map register flops
+dfflibmap -liberty /usr/local/share/qflow/tech/osu035/osu035_stdcells.lib
+opt
+
+# Map combinatorial cells, standard script
+abc -exe /usr/local/share/qflow/bin/yosys-abc -liberty /usr/local/share/qflow/tech/osu035/osu035_stdcells.lib -script +strash;scorr;ifraig;retime,{D};strash;dch,-f;map,-M,1,{D}
+flatten
+setundef -zero
+
+clean -purge
+# Output buffering
+iopadmap -outpad BUFX2 A:Y -bits
+# Cleanup
+opt
+clean
+rename -enumerate
+write_verilog  mux_using_if_mapped.v
+stat

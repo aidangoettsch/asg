@@ -1,0 +1,43 @@
+magic
+tech scmos
+magscale 1 2
+timestamp 1593047618
+<< metal1 >>
+rect -28 157 19 163
+rect 77 137 124 143
+rect 29 117 51 123
+<< m2contact >>
+rect -36 156 -28 164
+rect 60 158 68 166
+rect 124 136 132 144
+rect 60 16 68 24
+<< metal2 >>
+rect -35 64 -29 156
+rect 125 124 131 136
+rect 45 17 60 23
+rect 45 -23 51 17
+<< m3contact >>
+rect 60 158 68 164
+rect 60 156 68 158
+rect 124 116 132 124
+rect -36 56 -28 64
+<< metal3 >>
+rect 68 157 131 163
+use INVX1  _1_
+timestamp 1593047618
+transform 1 0 8 0 -1 210
+box -4 -6 36 206
+use BUFX2  _2_
+timestamp 1593047618
+transform 1 0 40 0 -1 210
+box -4 -6 52 206
+<< labels >>
+flabel metal3 s -35 57 -29 63 7 FreeSans 24 0 0 0 a
+port 0 nsew
+flabel metal3 s 125 157 131 163 3 FreeSans 24 0 0 0 gnd
+port 1 nsew
+flabel metal3 s 125 117 131 123 3 FreeSans 24 0 0 0 o
+port 2 nsew
+flabel metal2 s 45 -23 51 -17 7 FreeSans 24 270 0 0 vdd
+port 3 nsew
+<< end >>

@@ -1,0 +1,20 @@
+(DELAYFILE
+   (SDFVERSION "3.0")
+   (DESIGN "basic")
+   (DATE "21:13:38 Wednesday June 24, 2020")
+   (VENDOR "unknown")
+   (PROGRAM "qrouter")
+   (VERSION "unknown")
+   (DIVIDER /)
+   (TIMESCALE 1 ps)
+   (CELL
+      (CELLTYPE "basic")
+      (INSTANCE)
+      (DELAY
+         (ABSOLUTE
+            (INTERCONNECT _1_/Y _2_/A (7.9104e-05))
+            (INTERCONNECT _2_/Y ERROR (0.000345279))
+         )
+      )
+   )
+)

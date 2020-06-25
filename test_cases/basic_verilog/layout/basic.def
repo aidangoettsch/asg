@@ -1,0 +1,64 @@
+VERSION 5.6 ;
+DIVIDERCHAR "/" ;
+BUSBITCHARS "[]" ;
+DESIGN basic ;
+UNITS DISTANCE MICRONS 100 ;
+
+DIEAREA ( -480 -400 ) ( 34071 2200 ) ;
+
+TRACKS Y -400 DO 14 STEP 200 LAYER metal1 ;
+TRACKS X -480 DO 217 STEP 160 LAYER metal2 ;
+TRACKS Y -400 DO 14 STEP 200 LAYER metal3 ;
+TRACKS X -480 DO 217 STEP 160 LAYER metal4 ;
+
+END VIAS
+
+COMPONENTS 2 ;
+- _1_ INVX1 + PLACED ( 80 100 ) FS ;
+- _2_ BUFX2 + PLACED ( 400 100 ) FS ;
+END COMPONENTS
+
+PINS 4 ;
+- a + NET a
+  + LAYER metal3 ( -30 -30 ) ( 30 30 )
+  + PLACED ( -320 600 ) N ;
+- gnd + NET gnd
+  + LAYER metal3 ( -30 -30 ) ( 30 30 )
+  + PLACED ( 1280 1600 ) N ;
+- o + NET o
+  + LAYER metal3 ( -30 -30 ) ( 30 30 )
+  + PLACED ( 1280 1200 ) N ;
+- vdd + NET vdd
+  + LAYER metal2 ( -30 -30 ) ( 30 30 )
+  + PLACED ( 480 -200 ) N ;
+END PINS
+
+NETS 5 ;
+- a
+  ( PIN a ) 
+  ( _1_ A ) 
++ ROUTED metal2 ( -319 600 ) M3_M2 
+  NEW metal2 ( -319 600 ) ( * 1600 ) M2_M1 
+  NEW metal1 ( -319 1600 ) ( 160 * ) ;
+- _0_
+  ( _2_ A ) 
+  ( _1_ Y ) 
++ ROUTED metal1 ( 480 1200 ) ( 320 * ) ;
+- o
+  ( PIN o ) 
+  ( _2_ Y ) 
++ ROUTED metal2 ( 1280 1200 ) M3_M2 
+  NEW metal2 ( 1280 1200 ) ( * 1400 ) M2_M1 
+  NEW metal1 ( 1280 1400 ) ( 800 * ) ;
+- gnd
+  ( PIN gnd ) 
++ ROUTED metal1 ( 640 1620 ) M2_M1 
+  NEW metal2 ( 640 1600 ) M3_M2 
+  NEW metal3 ( 640 1600 ) ( 1280 * ) ;
+- vdd
+  ( PIN vdd ) 
++ ROUTED metal1 ( 640 200 ) M2_M1 
+  NEW metal2 ( 640 200 ) ( 480 * ) ( * -199 ) ;
+END NETS
+
+END DESIGN

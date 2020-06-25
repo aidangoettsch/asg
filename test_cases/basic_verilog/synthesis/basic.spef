@@ -1,0 +1,45 @@
+*SPEF "IEEE 1481.1999"
+*DESIGN "basic"
+*DATE "21:13:38 Wednesday June 24, 2020"
+*VENDOR "unknown"
+*PROGRAM "qrouter"
+*VERSION "unknown"
+*DESIGN_FLOW "qflow"
+*DIVIDER /
+*DELIMITER :
+*BUS_DELIMITER <>
+*T_UNIT 1 PS
+*C_UNIT 1 FF
+*R_UNIT 1 OHM
+*L_UNIT 1 HENRY
+
+*NAME_MAP
+*1 _0_
+*2 _1_
+*3 _2_
+*4 o
+*5 _2_
+*6 ERROR
+
+*PORTS
+
+*D_NET *1 5.76e-05
+*CONN
+*I *2:Y O *D _1
+*I *3:A I *L 0
+*CAP
+1 1_1 5.76e-05
+*RES
+1 *2:Y 1_1 0.373333
+2 1_1 *3:A 0
+*END
+*D_NET *4 0.000156
+*CONN
+*I *5:Y O *D _2
+*I *6:ERROR I *L 0
+*CAP
+1 4_1 0.000156
+*RES
+1 *5:Y 4_1 1.21333
+2 4_1 *6:ERROR 0
+*END
