@@ -1,0 +1,29 @@
+%import common.SIGNED_NUMBER    -> NUMBER
+%import common.WS
+%import common.WS_INLINE
+%import common.LETTER
+%import common.DIGIT
+%ignore WS_INLINE
+%ignore WS "+"
+
+STRING: ("_"|LETTER|DIGIT|"#"|".")+
+COMMENT: "*" /[^\n]/*
+%ignore COMMENT
+
+start: statement+
+?statement: (component | command | subcircuit) "\n"+
+
+parameter: STRING
+kv_option: STRING "=" STRING
+
+subcircuit_start_command: ".subckt" parameter* "\n"+
+subcircuit_end_command: ".ends" parameter*
+subcircuit: subcircuit_start_command statement+ subcircuit_end_command
+
+command_name: "end" -> end_name
+command: "." command_name parameter*
+
+component_prefix: "M" -> mosfet_pf
+                | "X" -> subcircuit_pf
+component_name: STRING
+component: component_prefix component_name parameter+ kv_option*
