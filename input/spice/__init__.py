@@ -2,34 +2,54 @@ from intermediate_lang import *
 from entities import *
 from lark import Lark, Transformer, Tree
 import os
+import itertools
 
 
 class SPICEComponent:
-    def __init__(self, inouts, params):
+    def __init__(self, identifier, inouts, params):
+        self.identifier = identifier
         self.inouts = inouts
         self.params = params
+        self.entity = self.to_entity()
+
+    def to_entity(self):
+        pass
 
 
 class SPICEMosfet(SPICEComponent):
-    def __init__(self, inouts, params):
+    def __init__(self, identifier, inouts, params):
         fet_type = inouts[-1]
         inouts = inouts[:-1]
-        super().__init__(inouts, params)
+        super().__init__(identifier, inouts, params)
         self.fet_type = fet_type
 
+    def __str__(self):
+        return f"MOSFET connected to {', '.join(self.inouts)} with {str(self.params)}"
 
-class SPICEGate(SPICEComponent):
-    def __init__(self, inouts, params):
-        gate_fullname = inouts[-1]
+
+class SPICECell(SPICEComponent):
+    def __init__(self, identifier, inouts, params):
+        cell_fullname = inouts[-1]
         inouts = inouts[:-1]
-        super().__init__(inouts, params)
-        self.gate_fullname = gate_fullname
+        self.cell_fullname = cell_fullname
+        super().__init__(identifier, inouts, params)
+
+    def __str__(self):
+        return f"Cell {self.cell_fullname} connected to {', '.join(self.inouts)} with {str(self.params)}"
+
+    def to_entity(self):
+        return Cell(self.cell_fullname)
 
 
 class SPICESubcircuit:
-    def __init__(self, name: str, components: list):
+    def __init__(self, name, inouts, components):
         self.name = name
+        self.inouts = inouts
         self.components = components
+
+    def __str__(self):
+        children = '\n\t'.join(str(x) for x in self.components)
+        return f"{self.name} {', '.join(self.inouts)}\n\t{children}"
 
 
 class SPICETransformer(Transformer):
@@ -45,29 +65,29 @@ class SPICETransformer(Transformer):
     def subcircuit_start_command(self, start_cmd):
         return {
             "name": start_cmd[0],
-            "pins": start_cmd[1:],
+            "inouts": start_cmd[1:],
         }
 
     def subcircuit(self, subcircuit):
-        return SPICESubcircuit(subcircuit[0]["name"], subcircuit)
+        return SPICESubcircuit(subcircuit[0]["name"], subcircuit[0]["inouts"], subcircuit[1:-1])
 
     def component(self, component: list):
         component_types = {
             "mosfet_pf": SPICEMosfet,
-            "subcircuit_pf": SPICEGate
+            "subcircuit_pf": SPICECell
         }
 
         inouts = []
         params = []
-        for option in component[1:]:
+        for option in component[2:]:
             if type(option) == str:
                 inouts.append(option)
             else:
                 params.append(option)
-        component_types[component[0].data](inouts, dict(params))
+        return component_types[component[0].data](component[1], inouts, dict(params))
 
 
-def spice_to_il(input_file, subircuit, options_override={}) -> InputIL:
+def spice_to_il(input_file, subcircuit, options_override={}) -> InputIL:
     options = {
         "gate_level": True,
     }
@@ -76,8 +96,22 @@ def spice_to_il(input_file, subircuit, options_override={}) -> InputIL:
     # Get paths relative to the location of this file, not the root of the module
     script_dir = os.path.dirname(os.path.realpath(__file__))
     with open(os.path.join(script_dir, "spice.lark")) as grammar:
-        parser = Lark(grammar.read() + "\n")
+        parser = Lark(grammar.read() + "\n", parser="lalr", transformer=SPICETransformer())
     parsed = parser.parse(input_file.read())
-    SPICETransformer().transform(parsed)
 
-    return InputIL()
+    for statement in parsed.children:
+        if isinstance(statement, SPICESubcircuit) and statement.name == subcircuit:
+            components = statement.components
+
+            nets = {}
+
+            for i, component in enumerate(components):
+                for j, inout in enumerate(component.inouts):
+                    nets.setdefault(inout, []).append((i, j))
+
+            connections = []
+            for net in nets.values():
+                print(net)
+                print(list(itertools.product(net, repeat=2)))
+                connections += [Connection(*src, *dest) for src, dest in itertools.product(net, repeat=2) if src != dest]
+            return InputIL([component.entity for component in components], connections)

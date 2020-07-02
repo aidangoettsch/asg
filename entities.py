@@ -34,6 +34,16 @@ class Component:
         return f"{self.human_name} at ({self.location.x}, {self.location.y})"
 
 
+class CircuitInout(Component):
+    def __init__(self):
+        super().__init__()
+        self.human_name = "circuit_inout"
+        self.pin_count = 1
+        self.pin_locations = [Point(0, 0)]
+        self.inputs = [0]
+        self.outputs = [0]
+
+
 class CircuitInput(Component):
     def __init__(self):
         super().__init__()
@@ -60,3 +70,30 @@ class Resistor(Component):
         self.pin_locations = [Point(-10, 0), Point(10, 0)]
         self.inputs = [0]
         self.outputs = [1]
+
+
+class Cell(Component):
+    cell_configs = {
+        "BUFX2": {
+            "pin_count": 2,
+            "inputs": [2],
+            "outputs": [3],
+            "pin_locations": [Point(0, 0), Point(0, 0), Point(0, 0), Point(0, 0)],
+        },
+        "INVX1": {
+            "pin_count": 2,
+            "inputs": [0],
+            "outputs": [1],
+            "pin_locations": [Point(0, 0), Point(0, 0), Point(0, 0), Point(0, 0)],
+        },
+    }
+
+    def __init__(self, cell_fullname):
+        super().__init__()
+        self.human_name = cell_fullname
+        cell_config = Cell.cell_configs[cell_fullname]
+        self.pin_count = cell_config["pin_count"]
+        self.inputs = cell_config["inputs"]
+        self.outputs = cell_config["outputs"]
+        self.pin_locations = cell_config["pin_locations"]
+
