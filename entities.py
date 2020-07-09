@@ -63,28 +63,54 @@ class CircuitOutput(Component):
 
 
 class Resistor(Component):
-    def __init__(self):
+    def __init__(self, resistance_ohms):
         super().__init__()
         self.human_name = "resistor"
         self.pin_count = 2
         self.pin_locations = [Point(-10, 0), Point(10, 0)]
-        self.inputs = [0]
-        self.outputs = [1]
+        self.inputs = [1]
+        self.outputs = [0]
+        self.resistance_ohms = resistance_ohms
 
 
 class Cell(Component):
     cell_configs = {
         "BUFX2": {
-            "pin_count": 2,
+            "pin_count": 4,
             "inputs": [2],
             "outputs": [3],
             "pin_locations": [Point(0, 0), Point(0, 0), Point(0, 0), Point(0, 0)],
         },
         "INVX1": {
-            "pin_count": 2,
+            "pin_count": 4,
             "inputs": [0],
             "outputs": [1],
             "pin_locations": [Point(0, 0), Point(0, 0), Point(0, 0), Point(0, 0)],
+        },
+        "NAND2X1": {
+            "pin_count": 5,
+            "inputs": [3, 4],
+            "outputs": [1],
+            "pin_locations": [
+                Point(0, 0),
+                Point(0, 0),
+                Point(0, 0),
+                Point(0, 0),
+                Point(0, 0),
+            ],
+        },
+        "OAI21X1": {
+            "pin_count": 6,
+            "inputs": [2, 3, 5],
+            "outputs": [4],
+            "pin_locations": [
+                Point(0, 0),
+                Point(0, 0),
+                Point(0, 0),
+                Point(0, 0),
+                Point(0, 0),
+                Point(0, 0),
+            ],
         },
     }
 
@@ -96,4 +122,3 @@ class Cell(Component):
         self.inputs = cell_config["inputs"]
         self.outputs = cell_config["outputs"]
         self.pin_locations = cell_config["pin_locations"]
-

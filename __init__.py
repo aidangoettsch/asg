@@ -4,11 +4,23 @@ import output.json
 import output.xcircuit_ps
 import output.text
 import input.spice
+import argparse
+import os
+import sys
 
 
-def main() -> None:
-    with open("test.spc") as inf:
-        inp = input.spice.spice_to_il(inf, "basic")
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input_file", metavar="input")
+    args = parser.parse_args()
+
+    root, ext = os.path.splitext(os.path.basename(args.input_file))
+    if ext == ".spc":
+        with open(args.input_file) as inf:
+            inp = input.spice.spice_to_il(inf, root)
+    else:
+        print(f"Unsupported filetype {ext}")
+        sys.exit(-1)
     # res = asg.asg_naive(inp)
     res = asg.asg_ltr(inp)
     with open("output.json", "w+") as out:

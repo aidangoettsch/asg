@@ -22,8 +22,13 @@ def asg_naive(inp, options_override={}):
     for connection in inp.connections:
         start_component = inp.components[connection.start_entity]
         end_component = inp.components[connection.end_entity]
-        start_pin_location = start_component.location + start_component.pin_locations[connection.start_pin]
-        end_pin_location = end_component.location + end_component.pin_locations[connection.end_pin]
+        start_pin_location = (
+            start_component.location
+            + start_component.pin_locations[connection.start_pin]
+        )
+        end_pin_location = (
+            end_component.location + end_component.pin_locations[connection.end_pin]
+        )
         res.lines.append(Line(connection, start_pin_location, end_pin_location))
 
     return res
@@ -43,7 +48,11 @@ class LTRSorter:
         if component_idx in self.cache:
             return self.cache[component_idx]
 
-        distances = [self.find_distance_from_input(i, seen + [component_idx]) for i, x in enumerate(self.adjacency[component_idx]) if x == -1]
+        distances = [
+            self.find_distance_from_input(i, seen + [component_idx])
+            for i, x in enumerate(self.adjacency[component_idx])
+            if x == -1
+        ]
         if len(distances) == 0 or numpy.all(distances == -1):
             return -1
         res = max(distances) + 1
@@ -72,8 +81,12 @@ def asg_ltr(inp, options_override={}):
         adjacency[start_i][end_i] = 1
         adjacency[end_i][start_i] = -1
 
-    ltr_sorter = LTRSorter(adjacency, [i for i, e in enumerate(inp.components) if e.inputs == []])
-    columns = [ltr_sorter.find_distance_from_input(i) for i, e in enumerate(inp.components)]
+    ltr_sorter = LTRSorter(
+        adjacency, [i for i, e in enumerate(inp.components) if e.inputs == []]
+    )
+    columns = [
+        ltr_sorter.find_distance_from_input(i) for i, e in enumerate(inp.components)
+    ]
 
     starting_x = options["starting_x"]
     y_indicies = [options["starting_y"]] * (max(columns) + 1)
@@ -91,8 +104,13 @@ def asg_ltr(inp, options_override={}):
     for connection in inp.connections:
         start_component = inp.components[connection.start_entity]
         end_component = inp.components[connection.end_entity]
-        start_pin_location = start_component.location + start_component.pin_locations[connection.start_pin]
-        end_pin_location = end_component.location + end_component.pin_locations[connection.end_pin]
+        start_pin_location = (
+            start_component.location
+            + start_component.pin_locations[connection.start_pin]
+        )
+        end_pin_location = (
+            end_component.location + end_component.pin_locations[connection.end_pin]
+        )
         res.lines.append(Line(connection, start_pin_location, end_pin_location))
 
     return res

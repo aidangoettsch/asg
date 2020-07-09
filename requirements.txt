@@ -1,2 +1,3 @@
 numpy
 lark-parser
+black
