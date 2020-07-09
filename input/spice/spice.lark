@@ -26,5 +26,8 @@ command: "." command_name parameter*
 component_prefix: "M" -> mosfet_pf
                 | "X" -> subcircuit_pf
                 | "R" -> resistor_pf
+                | "C" -> capacitor_pf
+                | "D" -> diode_pf
+                | "Q" -> bipolar_pf
 component_name: STRING
 component: component_prefix component_name parameter+ kv_option*

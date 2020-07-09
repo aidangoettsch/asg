@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 from intermediate_lang import *
 from entities import *
 from lark import Lark, Transformer
@@ -11,9 +13,10 @@ class SPICEComponent:
         self.identifier = identifier
         self.inouts = inouts
         self.params = params
-        self.entity = self.to_entity()
 
-    def to_entity(self):
+    @property
+    @abstractmethod
+    def entity(self) -> Component:
         pass
 
 
@@ -38,7 +41,8 @@ class SPICECell(SPICEComponent):
     def __str__(self):
         return f"Cell {self.cell_fullname} connected to {', '.join(self.inouts)} with {str(self.params)}"
 
-    def to_entity(self):
+    @property
+    def entity(self) -> Component:
         return Cell(self.cell_fullname)
 
 
@@ -52,15 +56,35 @@ class SPICEResistor(SPICEComponent):
     def __str__(self):
         return f"Resistor {self.resistance_ohms}Ω connected to {', '.join(self.inouts)} with {str(self.params)}"
 
-    def to_entity(self):
+    @property
+    def entity(self) -> Component:
         return Resistor(self.resistance_ohms)
+
+
+class SPICEInout(SPICEComponent):
+    def __init__(self, identifier):
+        super().__init__(identifier, [identifier], [])
+        self.type = None
+
+    def __str__(self):
+        return f"{self.type if self.type is not None else 'Inout'} {self.identifier} connected to {', '.join(self.inouts)} with {str(self.params)}"
+
+    @property
+    def entity(self) -> Component:
+        if self.type == "Input":
+            return CircuitInput(self.identifier)
+        elif self.type == "Output":
+            return CircuitOutput(self.identifier)
+        return CircuitInout(self.identifier)
 
 
 class SPICESubcircuit:
     def __init__(self, name, inouts, components):
         self.name = name
         self.inouts = inouts
-        self.components = components
+        self.components = components + [
+            SPICEInout(identifier) for identifier in self.inouts
+        ]
 
     def __str__(self):
         children = "\n\t".join(str(x) for x in self.components)
@@ -128,7 +152,11 @@ def spice_to_il(input_file, subcircuit, options_override={}) -> InputIL:
             for i, component in enumerate(components):
                 for j, inout in enumerate(component.inouts):
                     # Ignore pins that aren't I/O to remove Vdd and GND from the schematic
-                    if j in component.entity.inputs or j in component.entity.outputs:
+                    if (
+                        isinstance(component, SPICEInout)
+                        or j in component.entity.inputs
+                        or j in component.entity.outputs
+                    ):
                         nets.setdefault(inout, []).append((i, j))
 
             connections = []
@@ -138,6 +166,33 @@ def spice_to_il(input_file, subcircuit, options_override={}) -> InputIL:
                     for src, dest in itertools.product(net, repeat=2)
                     if src != dest
                 ]
+
+            for connection in connections:
+                component_start = components[connection.start_entity]
+                component_end = components[connection.end_entity]
+                if isinstance(component_start, SPICEInout) or isinstance(
+                    component_end, SPICEInout
+                ):
+                    if (
+                        not isinstance(component_start, SPICEInout)
+                        and connection.start_pin in component_start.entity.inputs
+                    ):
+                        component_end.type = "Input"
+                    if (
+                        not isinstance(component_end, SPICEInout)
+                        and connection.end_pin in component_end.entity.inputs
+                    ):
+                        component_start.type = "Input"
+                    if (
+                        not isinstance(component_start, SPICEInout)
+                        and connection.start_pin in component_start.entity.outputs
+                    ):
+                        component_end.type = "Output"
+                    if (
+                        not isinstance(component_end, SPICEInout)
+                        and connection.end_pin in component_end.entity.outputs
+                    ):
+                        component_start.type = "Output"
             return InputIL([component.entity for component in components], connections)
 
     print(

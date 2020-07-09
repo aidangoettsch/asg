@@ -35,9 +35,9 @@ class Component:
 
 
 class CircuitInout(Component):
-    def __init__(self):
+    def __init__(self, identifier=""):
         super().__init__()
-        self.human_name = "circuit_inout"
+        self.human_name = "Inout" + ("" if identifier == "" else (" " + identifier))
         self.pin_count = 1
         self.pin_locations = [Point(0, 0)]
         self.inputs = [0]
@@ -45,18 +45,18 @@ class CircuitInout(Component):
 
 
 class CircuitInput(Component):
-    def __init__(self):
+    def __init__(self, identifier=""):
         super().__init__()
-        self.human_name = "circuit_input"
+        self.human_name = "Input" + ("" if identifier == "" else (" " + identifier))
         self.pin_count = 1
         self.pin_locations = [Point(0, 0)]
         self.outputs = [0]
 
 
 class CircuitOutput(Component):
-    def __init__(self):
+    def __init__(self, identifier=""):
         super().__init__()
-        self.human_name = "circuit_output"
+        self.human_name = "Output" + ("" if identifier == "" else (" " + identifier))
         self.pin_count = 1
         self.pin_locations = [Point(0, 0)]
         self.inputs = [0]
