@@ -1,0 +1,16 @@
+%import common.SIGNED_NUMBER    -> NUMBER
+%import common.WS
+%import common.WS_INLINE
+%import common.LETTER
+%import common.DIGIT
+%ignore WS
+
+STRING: ("_"|LETTER|DIGIT|"#"|"."|"-"|":"|"~")+
+
+
+literal: STRING
+number: NUMBER
+string: "\"" (STRING|"("|")")* "\""
+?statement: list | literal | number | string
+
+list: "(" literal statement+ ")"

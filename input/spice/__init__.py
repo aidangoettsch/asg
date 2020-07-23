@@ -32,18 +32,19 @@ class SPICEMosfet(SPICEComponent):
 
 
 class SPICECell(SPICEComponent):
-    def __init__(self, identifier, inouts, params):
+    def __init__(self, identifier, inouts, params, cell_configs):
         cell_fullname = inouts[-1]
         inouts = inouts[:-1]
         self.cell_fullname = cell_fullname
         super().__init__(identifier, inouts, params)
+        self.cell_config = cell_configs[cell_fullname]
 
     def __str__(self):
         return f"Cell {self.cell_fullname} connected to {', '.join(self.inouts)} with {str(self.params)}"
 
     @property
     def entity(self) -> Component:
-        return Cell(self.cell_fullname)
+        return Cell(self.cell_config)
 
 
 class SPICEResistor(SPICEComponent):
@@ -91,7 +92,17 @@ class SPICESubcircuit:
         return f"{self.name} {', '.join(self.inouts)}\n\t{children}"
 
 
+def spice_cell_factory(cell_configs):
+    return lambda identifier, inouts, params: SPICECell(
+        identifier, inouts, params, cell_configs
+    )
+
+
 class SPICETransformer(Transformer):
+    def __init__(self, cell_configs):
+        super().__init__()
+        self.cell_configs = cell_configs
+
     def parameter(self, parameter):
         return parameter[0].value
 
@@ -115,7 +126,7 @@ class SPICETransformer(Transformer):
     def component(self, component: list):
         component_types = {
             "mosfet_pf": SPICEMosfet,
-            "subcircuit_pf": SPICECell,
+            "subcircuit_pf": spice_cell_factory(self.cell_configs),
             "resistor_pf": SPICEResistor,
         }
 
@@ -129,23 +140,28 @@ class SPICETransformer(Transformer):
         return component_types[component[0].data](component[1], inouts, dict(params))
 
 
-def spice_to_il(input_file, subcircuit, options_override={}) -> InputIL:
-    options = {
-        "gate_level": True,
-    }
+def spice_to_il(input_file, subcircuit, library, options_override={}) -> InputIL:
+    options = {"gate_level": True, "filter_io": ["vdd", "gnd"]}
     dict.update(options, options_override)
 
     # Get paths relative to the location of this file, not the root of the module
     script_dir = os.path.dirname(os.path.realpath(__file__))
     with open(os.path.join(script_dir, "spice.lark")) as grammar:
         parser = Lark(
-            grammar.read() + "\n", parser="lalr", transformer=SPICETransformer()
+            grammar.read() + "\n",
+            parser="lalr",
+            transformer=SPICETransformer(library.symbols),
         )
     parsed = parser.parse(input_file.read())
 
     for statement in parsed.children:
         if isinstance(statement, SPICESubcircuit) and statement.name == subcircuit:
-            components = statement.components
+            components = list(
+                filter(
+                    lambda c: c.identifier not in options["filter_io"],
+                    statement.components,
+                )
+            )
 
             nets = {}
 
@@ -163,8 +179,7 @@ def spice_to_il(input_file, subcircuit, options_override={}) -> InputIL:
             for net in nets.values():
                 connections += [
                     Connection(*src, *dest)
-                    for src, dest in itertools.product(net, repeat=2)
-                    if src != dest
+                    for src, dest in itertools.combinations(net, 2)
                 ]
 
             for connection in connections:

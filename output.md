@@ -1,31 +1,13 @@
 # Components
-- NAND2X1 at (70, 10)
-- BUFX2 at (70, 40)
-- INVX1 at (70, 70)
-- OAI21X1 at (40, 10)
-- Inout vdd at (-20, 100)
-- Inout gnd at (-20, 130)
-- Input din_0 at (10, 10)
-- Input din_1 at (10, 40)
-- Output mux_out at (-20, 160)
-- Input sel at (10, 70)
+- INVX1 at (50, 20)
+- BUFX2 at (20, 20)
+- Input a at (20, 50)
+- Output o at (-10, 50)
 
 # Lines
-- Line from NAND2X1 at (70, 10) pin #1 to OAI21X1 at (40, 10) pin #5
-- Line from OAI21X1 at (40, 10) pin #5 to NAND2X1 at (70, 10) pin #1
-- Line from NAND2X1 at (70, 10) pin #3 to Input din_1 at (10, 40) pin #0
-- Line from Input din_1 at (10, 40) pin #0 to NAND2X1 at (70, 10) pin #3
-- Line from NAND2X1 at (70, 10) pin #4 to OAI21X1 at (40, 10) pin #2
-- Line from NAND2X1 at (70, 10) pin #4 to Input sel at (10, 70) pin #0
-- Line from OAI21X1 at (40, 10) pin #2 to NAND2X1 at (70, 10) pin #4
-- Line from OAI21X1 at (40, 10) pin #2 to Input sel at (10, 70) pin #0
-- Line from Input sel at (10, 70) pin #0 to NAND2X1 at (70, 10) pin #4
-- Line from Input sel at (10, 70) pin #0 to OAI21X1 at (40, 10) pin #2
-- Line from BUFX2 at (70, 40) pin #2 to OAI21X1 at (40, 10) pin #4
-- Line from OAI21X1 at (40, 10) pin #4 to BUFX2 at (70, 40) pin #2
-- Line from BUFX2 at (70, 40) pin #3 to Output mux_out at (-20, 160) pin #0
-- Line from Output mux_out at (-20, 160) pin #0 to BUFX2 at (70, 40) pin #3
-- Line from INVX1 at (70, 70) pin #0 to Input din_0 at (10, 10) pin #0
-- Line from Input din_0 at (10, 10) pin #0 to INVX1 at (70, 70) pin #0
-- Line from INVX1 at (70, 70) pin #1 to OAI21X1 at (40, 10) pin #3
-- Line from OAI21X1 at (40, 10) pin #3 to INVX1 at (70, 70) pin #1
+- Line from INVX1 at (50, 20) pin #0 to Input a at (20, 50) pin #0
+- Line from Input a at (20, 50) pin #0 to INVX1 at (50, 20) pin #0
+- Line from INVX1 at (50, 20) pin #1 to BUFX2 at (20, 20) pin #2
+- Line from BUFX2 at (20, 20) pin #2 to INVX1 at (50, 20) pin #1
+- Line from BUFX2 at (20, 20) pin #3 to Output o at (-10, 50) pin #0
+- Line from Output o at (-10, 50) pin #0 to BUFX2 at (20, 20) pin #3

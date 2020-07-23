@@ -11,3 +11,8 @@ class OutputIL:
     def __init__(self):
         self.components = []
         self.lines = []
+
+
+class LibraryIL:
+    def __init__(self):
+        self.symbols = {}

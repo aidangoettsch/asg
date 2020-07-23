@@ -7,6 +7,12 @@ class Point:
         return Point(self.x + o.x, self.y + o.y)
 
 
+class BoundingBox:
+    def __init__(self, ul_corner, lr_corner):
+        self.ul_corner = ul_corner
+        self.lr_corner = lr_corner
+
+
 class Connection:
     def __init__(self, start_entity, start_pin, end_entity, end_pin):
         self.start_entity = start_entity
@@ -32,6 +38,20 @@ class Component:
 
     def __str__(self):
         return f"{self.human_name} at ({self.location.x}, {self.location.y})"
+
+
+class LibraryComponent:
+    def __init__(
+        self, name, full_name, pin_locations, inputs, outputs, s_expression, properties
+    ):
+        self.name = name
+        self.full_name = full_name
+        self.pin_count = len(pin_locations)
+        self.pin_locations = pin_locations
+        self.inputs = inputs
+        self.outputs = outputs
+        self.s_expression = s_expression
+        self.properties = properties
 
 
 class CircuitInout(Component):
@@ -74,51 +94,10 @@ class Resistor(Component):
 
 
 class Cell(Component):
-    cell_configs = {
-        "BUFX2": {
-            "pin_count": 4,
-            "inputs": [2],
-            "outputs": [3],
-            "pin_locations": [Point(0, 0), Point(0, 0), Point(0, 0), Point(0, 0)],
-        },
-        "INVX1": {
-            "pin_count": 4,
-            "inputs": [0],
-            "outputs": [1],
-            "pin_locations": [Point(0, 0), Point(0, 0), Point(0, 0), Point(0, 0)],
-        },
-        "NAND2X1": {
-            "pin_count": 5,
-            "inputs": [3, 4],
-            "outputs": [1],
-            "pin_locations": [
-                Point(0, 0),
-                Point(0, 0),
-                Point(0, 0),
-                Point(0, 0),
-                Point(0, 0),
-            ],
-        },
-        "OAI21X1": {
-            "pin_count": 6,
-            "inputs": [2, 3, 5],
-            "outputs": [4],
-            "pin_locations": [
-                Point(0, 0),
-                Point(0, 0),
-                Point(0, 0),
-                Point(0, 0),
-                Point(0, 0),
-                Point(0, 0),
-            ],
-        },
-    }
-
-    def __init__(self, cell_fullname):
+    def __init__(self, cell_config):
         super().__init__()
-        self.human_name = cell_fullname
-        cell_config = Cell.cell_configs[cell_fullname]
-        self.pin_count = cell_config["pin_count"]
-        self.inputs = cell_config["inputs"]
-        self.outputs = cell_config["outputs"]
-        self.pin_locations = cell_config["pin_locations"]
+        self.human_name = cell_config.name
+        self.pin_count = cell_config.pin_count
+        self.inputs = cell_config.inputs
+        self.outputs = cell_config.outputs
+        self.pin_locations = cell_config.pin_locations
