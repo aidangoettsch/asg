@@ -1,9 +1,14 @@
-from asg.constraints import LTRConstraint
+from asg.constraints import *
 from intermediate_lang import *
 from entities import *
+import numpy
 
 constraint_weights = {
     LTRConstraint: 10,
+    VerticalSortConstraint: 10,
+    InputYDegridConstraint: 10,
+    CreateLinesConstraint: 10,
+    UntangleConstraint: 10,
 }
 
 
@@ -16,21 +21,19 @@ def constraint_asg(inp):
 
     res.connections = inp.connections
 
+    n_components = len(res.components)
+    res.adjacency = numpy.zeros((n_components, n_components))
+
+    for connection in res.connections:
+        start_i = connection.start_entity
+        end_i = connection.end_entity
+        res.adjacency[start_i][end_i] = 1
+        res.adjacency[end_i][start_i] = -1
+
     score = 0
     for constraint_type in constraint_weights:
         constraint = constraint_type(res)
         constraint.maximize()
         score += constraint_weights[constraint_type] * constraint.get_score()
 
-    for connection in res.connections:
-        start_component = res.components[connection.start_entity]
-        end_component = res.components[connection.end_entity]
-        start_pin_location = (
-            start_component.location
-            + start_component.pin_locations[connection.start_pin]
-        )
-        end_pin_location = (
-            end_component.location + end_component.pin_locations[connection.end_pin]
-        )
-        res.lines.append(Line(connection, start_pin_location, end_pin_location))
     return res

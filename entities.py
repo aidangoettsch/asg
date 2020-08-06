@@ -1,3 +1,6 @@
+from s_expression import *
+
+
 class Point:
     def __init__(self, x, y):
         self.x = x
@@ -5,6 +8,9 @@ class Point:
 
     def __add__(self, o):
         return Point(self.x + o.x, self.y + o.y)
+
+    def __str__(self):
+        return f"({self.x}, {self.y})"
 
 
 class BoundingBox:
@@ -54,10 +60,43 @@ class LibraryComponent:
         self.properties = properties
 
 
+class LibraryProperty:
+    def __init__(self, key, value, id, location, effects):
+        self.key = key
+        self.value = value
+        self.id = id
+        self.location = location
+        self.effects = effects
+
+    def to_s_expression(self, location_offset: Point):
+        return SExpressionList(
+            "property",
+            [
+                self.key,
+                self.value,
+                SExpressionList("id", [self.id]),
+                SExpressionList(
+                    "at",
+                    [
+                        self.location[0] + location_offset.x,
+                        self.location[1] + location_offset.y,
+                        self.location[2],
+                    ],
+                ),
+                *(
+                    [SExpressionList("effects", self.effects)]
+                    if self.effects != []
+                    else []
+                ),
+            ],
+        )
+
+
 class CircuitInout(Component):
     def __init__(self, identifier=""):
         super().__init__()
         self.human_name = "Inout" + ("" if identifier == "" else (" " + identifier))
+        self.identifier = identifier
         self.pin_count = 1
         self.pin_locations = [Point(0, 0)]
         self.inputs = [0]
@@ -68,6 +107,7 @@ class CircuitInput(Component):
     def __init__(self, identifier=""):
         super().__init__()
         self.human_name = "Input" + ("" if identifier == "" else (" " + identifier))
+        self.identifier = identifier
         self.pin_count = 1
         self.pin_locations = [Point(0, 0)]
         self.outputs = [0]
@@ -77,6 +117,7 @@ class CircuitOutput(Component):
     def __init__(self, identifier=""):
         super().__init__()
         self.human_name = "Output" + ("" if identifier == "" else (" " + identifier))
+        self.identifier = identifier
         self.pin_count = 1
         self.pin_locations = [Point(0, 0)]
         self.inputs = [0]
@@ -91,6 +132,17 @@ class Resistor(Component):
         self.inputs = [1]
         self.outputs = [0]
         self.resistance_ohms = resistance_ohms
+
+
+class Diode(Component):
+    def __init__(self, model):
+        super().__init__()
+        self.human_name = "diode"
+        self.pin_count = 2
+        self.pin_locations = [Point(-10, 0), Point(10, 0)]
+        self.inputs = [1]
+        self.outputs = [0]
+        self.resistance_ohms = model
 
 
 class Cell(Component):

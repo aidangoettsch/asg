@@ -45,8 +45,50 @@ class SchematicComponent(SchematicElement):
             SchematicElement("in_bom", [SExpressionLiteral("yes")]),
             SchematicElement("on_board", [SExpressionLiteral("yes")]),
             SchematicElement("uuid", [str(self.uuid)]),
+            *[prop.to_s_expression(location) for prop in library_component.properties],
         ]
-        super().__init__("symbol", children + library_component.properties)
+        super().__init__("symbol", children)
+
+
+class SchematicLabel(SchematicElement):
+    def __init__(self, name, direction, location):
+        super().__init__(
+            "global_label",
+            [
+                name,
+                SchematicElement("shape", [SExpressionLiteral(direction)]),
+                SchematicElement(
+                    "at", [location.x, location.y, 180 if direction == "input" else 0]
+                ),
+                SchematicElement(
+                    "effects",
+                    [
+                        SchematicElement(
+                            "font", [SchematicElement("size", [1.27, 1.27])]
+                        ),
+                        SchematicElement(
+                            "justify",
+                            [
+                                SExpressionLiteral(
+                                    "right" if direction == "input" else "left"
+                                )
+                            ],
+                        ),
+                    ],
+                ),
+            ],
+        )
+
+
+def component_to_eeschema(component, library):
+    if type(component) == entities.Cell:
+        return SchematicComponent(
+            library.symbols[component.human_name], component.location
+        )
+    if type(component) == entities.CircuitInput:
+        return SchematicLabel(component.identifier, "input", component.location)
+    if type(component) == entities.CircuitOutput:
+        return SchematicLabel(component.identifier, "output", component.location)
 
 
 def il_to_eeschema(
@@ -60,9 +102,7 @@ def il_to_eeschema(
     lib_symbols = SchematicElement("lib_symbols", symbols_used)
 
     components = [
-        SchematicComponent(library.symbols[component.human_name], component.location)
-        for component in inp.components
-        if type(component) == entities.Cell
+        component_to_eeschema(component, library) for component in inp.components
     ]
     symbol_instances = SchematicElement(
         "symbol_instances",
@@ -76,6 +116,7 @@ def il_to_eeschema(
                 ],
             )
             for c in components
+            if type(c) == SchematicComponent
         ],
     )
 

@@ -62,6 +62,21 @@ class SPICEResistor(SPICEComponent):
         return Resistor(self.resistance_ohms)
 
 
+class SPICEDiode(SPICEComponent):
+    def __init__(self, identifier, inouts, params):
+        model = inouts[-1]
+        inouts = inouts[:-1]
+        self.model = model
+        super().__init__(identifier, inouts, params)
+
+    def __str__(self):
+        return f"Diode model ${self.model} connected to {', '.join(self.inouts)} with {str(self.params)}"
+
+    @property
+    def entity(self) -> Component:
+        return Diode(self.model)
+
+
 class SPICEInout(SPICEComponent):
     def __init__(self, identifier):
         super().__init__(identifier, [identifier], [])
@@ -99,9 +114,14 @@ def spice_cell_factory(cell_configs):
 
 
 class SPICETransformer(Transformer):
-    def __init__(self, cell_configs):
+    def __init__(self, cell_configs, fill_subcircuits):
         super().__init__()
         self.cell_configs = cell_configs
+        self.fill_subcircuits = fill_subcircuits
+        for fill_subcircuit in fill_subcircuits:
+            self.cell_configs[fill_subcircuit] = LibraryComponent(
+                fill_subcircuit, fill_subcircuit, [], [], [], {}, []
+            )
 
     def parameter(self, parameter):
         return parameter[0].value
@@ -119,8 +139,14 @@ class SPICETransformer(Transformer):
         }
 
     def subcircuit(self, subcircuit):
+        components = subcircuit[1:-1]
+        filter(
+            lambda component: type(component) != SPICECell
+            or component.cell_fullname not in self.fill_subcircuits,
+            components,
+        )
         return SPICESubcircuit(
-            subcircuit[0]["name"], subcircuit[0]["inouts"], subcircuit[1:-1]
+            subcircuit[0]["name"], subcircuit[0]["inouts"], components
         )
 
     def component(self, component: list):
@@ -128,6 +154,7 @@ class SPICETransformer(Transformer):
             "mosfet_pf": SPICEMosfet,
             "subcircuit_pf": spice_cell_factory(self.cell_configs),
             "resistor_pf": SPICEResistor,
+            "diode_pf": SPICEDiode,
         }
 
         inouts = []
@@ -141,7 +168,11 @@ class SPICETransformer(Transformer):
 
 
 def spice_to_il(input_file, subcircuit, library, options_override={}) -> InputIL:
-    options = {"gate_level": True, "filter_io": ["vdd", "gnd"]}
+    options = {
+        "gate_level": True,
+        "filter_power": ["vdd", "gnd"],
+        "fill_subcircuit": ["FILL"],
+    }
     dict.update(options, options_override)
 
     # Get paths relative to the location of this file, not the root of the module
@@ -150,7 +181,7 @@ def spice_to_il(input_file, subcircuit, library, options_override={}) -> InputIL
         parser = Lark(
             grammar.read() + "\n",
             parser="lalr",
-            transformer=SPICETransformer(library.symbols),
+            transformer=SPICETransformer(library.symbols, options["fill_subcircuit"]),
         )
     parsed = parser.parse(input_file.read())
 
@@ -158,7 +189,7 @@ def spice_to_il(input_file, subcircuit, library, options_override={}) -> InputIL
         if isinstance(statement, SPICESubcircuit) and statement.name == subcircuit:
             components = list(
                 filter(
-                    lambda c: c.identifier not in options["filter_io"],
+                    lambda c: c.identifier not in options["filter_power"],
                     statement.components,
                 )
             )
@@ -177,10 +208,25 @@ def spice_to_il(input_file, subcircuit, library, options_override={}) -> InputIL
 
             connections = []
             for net in nets.values():
-                connections += [
-                    Connection(*src, *dest)
-                    for src, dest in itertools.combinations(net, 2)
-                ]
+                for src, dest in itertools.combinations(net, 2):
+                    if not (
+                        isinstance(components[src[0]], SPICEInout)
+                        or isinstance(components[dest[0]], SPICEInout)
+                    ):
+                        if (
+                            src[1] in components[src[0]].entity.inputs
+                            and dest[1] in components[dest[0]].entity.inputs
+                        ):
+                            continue
+                        if (
+                            src[1] in components[src[0]].entity.outputs
+                            and dest[1] in components[dest[0]].entity.outputs
+                        ):
+                            continue
+                    if src[1] in components[src[0]].entity.inputs:
+                        connections.append(Connection(*dest, *src))
+                    else:
+                        connections.append(Connection(*src, *dest))
 
             for connection in connections:
                 component_start = components[connection.start_entity]

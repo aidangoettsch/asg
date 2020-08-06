@@ -35,7 +35,30 @@ def symbol_to_il(symbol):
         if type(prop) != SExpressionList:
             continue
         if prop.name == "property":
-            properties.append(prop)
+            property_key = prop.children[0]
+            property_value = prop.children[1]
+            property_id = -1
+            property_location = [0, 0, 0]
+            property_effects = []
+
+            for c in prop.children:
+                if type(c) != SExpressionList:
+                    continue
+                if c.name == "id":
+                    property_id = c.children[0]
+                if c.name == "at":
+                    property_location = c.children
+                if c.name == "effects":
+                    property_effects = c.children
+            properties.append(
+                LibraryProperty(
+                    property_key,
+                    property_value,
+                    property_id,
+                    property_location,
+                    property_effects,
+                )
+            )
         if "Value" in prop.children:
             name = prop.children[1]
         if prop.name == "symbol":
@@ -50,7 +73,7 @@ def symbol_to_il(symbol):
                         if type(attr) != SExpressionList:
                             continue
                         if attr.name == "at":
-                            pin_location = Point(attr.children[0], attr.children[1])
+                            pin_location = Point(attr.children[0], -attr.children[1])
                         if attr.name == "number":
                             pin_idx = int(attr.children[0])
                     if pin_type == "input":

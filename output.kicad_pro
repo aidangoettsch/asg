@@ -232,7 +232,7 @@
     "meta": {
       "version": 0
     },
-    "net_format_name": "",
+    "net_format_name": "Spice",
     "page_layout_descr_file": "",
     "plot_directory": "",
     "spice_adjust_passive_values": false,
@@ -241,7 +241,7 @@
   },
   "sheets": [
     [
-      "df7e8229-6d7e-4a13-98ce-4f4d3b4ebc97",
+      "bee986b1-aeb8-4459-895c-56901ddee764",
       ""
     ]
   ],
