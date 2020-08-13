@@ -6,17 +6,14 @@ class Point:
         self.x = x
         self.y = y
 
-    def __add__(self, o):
-        return Point(self.x + o.x, self.y + o.y)
+    def __add__(self, other):
+        return Point(self.x + other.x, self.y + other.y)
+
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
 
     def __str__(self):
         return f"({self.x}, {self.y})"
-
-
-class BoundingBox:
-    def __init__(self, ul_corner, lr_corner):
-        self.ul_corner = ul_corner
-        self.lr_corner = lr_corner
 
 
 class Connection:
@@ -32,6 +29,60 @@ class Line:
         self.connection = connection
         self.locations = locations
 
+    @property
+    def line_segments(self):
+        res = []
+        last_loc = self.locations[0]
+        for loc in self.locations[1:]:
+            res.append((last_loc, loc))
+            last_loc = loc
+        return res
+
+
+class BoundingBox:
+    def __init__(self, ul_corner=Point(0, 0), lr_corner=Point(0, 0)):
+        self.ul_corner = ul_corner
+        self.lr_corner = lr_corner
+
+    @staticmethod
+    def from_line_segment(line_segment):
+        point_1 = line_segment[0]
+        point_2 = line_segment[1]
+
+        ul_corner = Point(0, 0)
+        lr_corner = Point(0, 0)
+        if point_1.x < point_2.x:
+            ul_corner.x = point_1.x
+            lr_corner.x = point_2.x
+        else:
+            ul_corner.x = point_2.x
+            lr_corner.x = point_1.x
+        if point_1.y < point_2.y:
+            ul_corner.y = point_1.y
+            lr_corner.y = point_2.y
+        else:
+            ul_corner.y = point_2.y
+            lr_corner.y = point_1.y
+
+        return BoundingBox(ul_corner, lr_corner)
+
+    def intersects(self, other: "BoundingBox"):
+        return (
+            self.ul_corner.x <= other.lr_corner.x
+            and self.lr_corner.x >= other.ul_corner.x
+            and self.ul_corner.y <= other.lr_corner.y
+            and self.lr_corner.y >= other.ul_corner.y
+        )
+
+    def expand(self, x_len, y_len):
+        self.ul_corner.x -= x_len / 2
+        self.lr_corner.x += x_len / 2
+        self.ul_corner.y -= y_len / 2
+        self.lr_corner.y += y_len / 2
+
+    def __add__(self, point: Point):
+        return BoundingBox(self.ul_corner + point, self.lr_corner + point)
+
 
 class Component:
     def __init__(self):
@@ -41,6 +92,27 @@ class Component:
         self.inputs = []
         self.outputs = []
         self.location = Point(0, 0)
+        self.mirrored_over_x = False
+        self.mirrored_over_y = False
+        self.bounding_box_backing = BoundingBox()
+
+    def mirror_over_x(self):
+        self.mirrored_over_x = not self.mirrored_over_x
+        for pin in self.pin_locations:
+            self.pin_locations[pin].y = -self.pin_locations[pin].y
+
+    def mirror_over_y(self):
+        self.mirrored_over_y = not self.mirrored_over_y
+        for pin in self.pin_locations:
+            self.pin_locations[pin].x = -self.pin_locations[pin].x
+
+    @property
+    def bounding_box(self) -> BoundingBox:
+        return self.bounding_box_backing + self.location
+
+    @bounding_box.setter
+    def bounding_box(self, bounding_box):
+        self.bounding_box_backing = bounding_box
 
     def __str__(self):
         return f"{self.human_name} at ({self.location.x}, {self.location.y})"
@@ -48,7 +120,15 @@ class Component:
 
 class LibraryComponent:
     def __init__(
-        self, name, full_name, pin_locations, inputs, outputs, s_expression, properties
+        self,
+        name,
+        full_name,
+        pin_locations,
+        inputs,
+        outputs,
+        s_expression,
+        properties,
+        bounding_box,
     ):
         self.name = name
         self.full_name = full_name
@@ -58,6 +138,7 @@ class LibraryComponent:
         self.outputs = outputs
         self.s_expression = s_expression
         self.properties = properties
+        self.bounding_box = bounding_box
 
 
 class LibraryProperty:
@@ -153,3 +234,4 @@ class Cell(Component):
         self.inputs = cell_config.inputs
         self.outputs = cell_config.outputs
         self.pin_locations = cell_config.pin_locations
+        self.bounding_box_backing = cell_config.bounding_box

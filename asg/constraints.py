@@ -5,9 +5,24 @@ from entities import *
 import itertools
 
 
+def get_segment_slope(segment):
+    return (
+        (segment[0].y - segment[1].y) / (segment[0].x - segment[1].x)
+        if (segment[0].x - segment[1].x) != 0
+        else float("inf")
+    )
+
+
+def get_segment_length(segment):
+    return (
+        ((segment[0].y - segment[1].y) ** 2) + ((segment[0].x - segment[1].x) ** 2)
+    ) ** 0.5
+
+
 class Constraint:
-    def __init__(self, output):
+    def __init__(self, output: OutputIL, options):
         self.output = output
+        self.options = options
 
     @abstractmethod
     def get_score(self):
@@ -20,16 +35,7 @@ class Constraint:
 
 class LTRConstraint(Constraint):
     def __init__(self, output, options_override=None):
-        super().__init__(output)
-        if options_override is None:
-            options_override = {}
-        self.options = {
-            "starting_x": 25.4,
-            "starting_y": 25.4,
-            "column_gap": 25.4,
-            "row_gap": 25.4,
-        }
-        dict.update(self.options, options_override)
+        super().__init__(output, options_override)
 
         self.inputs = [i for i, e in enumerate(output.components) if e.inputs == []]
 
@@ -91,13 +97,6 @@ class LTRConstraint(Constraint):
 
 
 class VerticalSortConstraint(Constraint):
-    def __init__(self, output, options_override=None):
-        super().__init__(output)
-        if options_override is None:
-            options_override = {}
-        self.options = {}
-        dict.update(self.options, options_override)
-
     def find_avg_input_y(self, component_idx):
         input_component_indicies = [
             i for i, e in enumerate(self.output.adjacency[component_idx]) if e == -1
@@ -128,12 +127,6 @@ class VerticalSortConstraint(Constraint):
 
 
 class InputYDegridConstraint(Constraint):
-    def __init__(self, output, options_override=None):
-        super().__init__(output)
-        if options_override is None:
-            options_override = {}
-        self.options = {}
-
     def find_optimal_y(self, inp_idx):
         input_to = [i for i, e in enumerate(self.output.adjacency[inp_idx]) if e == 1]
         max_x = 0
@@ -166,34 +159,7 @@ class InputYDegridConstraint(Constraint):
                 inp.location.y = self.find_optimal_y(i)
 
 
-class CreateLinesConstraint(Constraint):
-    def get_score(self):
-        return len(self.output.lines)
-
-    def maximize(self):
-        res = []
-        for connection in self.output.connections:
-            start_component = self.output.components[connection.start_entity]
-            end_component = self.output.components[connection.end_entity]
-            start_pin_location = (
-                start_component.location
-                + start_component.pin_locations[connection.start_pin]
-            )
-            end_pin_location = (
-                end_component.location + end_component.pin_locations[connection.end_pin]
-            )
-            res.append(Line(connection, start_pin_location, end_pin_location))
-
-        self.output.lines = res
-
-
 class UntangleConstraint(Constraint):
-    def __init__(self, output, options_override=None):
-        super().__init__(output)
-        if options_override is None:
-            options_override = {}
-        self.options = {}
-
     @staticmethod
     def point_cross_product(point_1, point_2):
         return point_1.x * point_2.y - point_2.x * point_1.y
@@ -208,14 +174,6 @@ class UntangleConstraint(Constraint):
         return r if r == 0 else numpy.sign(r)
 
     @staticmethod
-    def get_slope(segment):
-        return (
-            (segment[0].y - segment[1].y) / (segment[0].x - segment[1].x)
-            if (segment[0].x - segment[1].x) != 0
-            else float("inf")
-        )
-
-    @staticmethod
     def a_sandwiches_b(segment_a, segment_b):
         b_0 = UntangleConstraint.point_loc_relative_to_line(segment_b, segment_a[0])
         b_1 = UntangleConstraint.point_loc_relative_to_line(segment_b, segment_a[1])
@@ -224,10 +182,12 @@ class UntangleConstraint(Constraint):
 
     @staticmethod
     def check_cross(segment_1, segment_2):
-        slope_1 = UntangleConstraint.get_slope(segment_1)
-        slope_2 = UntangleConstraint.get_slope(segment_2)
+        slope_1 = get_segment_slope(segment_1)
+        slope_2 = get_segment_slope(segment_2)
         if slope_1 == slope_2:
-            return False
+            return BoundingBox.from_line_segment(segment_1).intersects(
+                BoundingBox.from_line_segment(segment_2)
+            )
 
         return UntangleConstraint.a_sandwiches_b(
             segment_1, segment_2
@@ -236,13 +196,9 @@ class UntangleConstraint(Constraint):
     def find_crossings(self):
         crossings = []
         for connection_pair in itertools.combinations(self.output.lines, 2):
-            line_segments = []
-            last_loc = connection_pair[0].locations[0]
-            for loc in connection_pair[0].locations[1:]:
-                line_segments.append((last_loc, loc))
-            last_loc = connection_pair[1].locations[0]
-            for loc in connection_pair[1].locations[1:]:
-                line_segments.append((last_loc, loc))
+            line_segments = (
+                connection_pair[0].line_segments + connection_pair[1].line_segments
+            )
 
             for segment_pair in itertools.combinations(line_segments, 2):
                 if self.check_cross(segment_pair[0], segment_pair[1]):
@@ -256,5 +212,136 @@ class UntangleConstraint(Constraint):
 
     def maximize(self):
         for crossing in self.find_crossings():
-            print(crossing[0].connection.end_entity)
-            print(crossing[1].connection.end_entity)
+            prev_score = self.get_score()
+            if crossing[0].connection.end_entity == crossing[1].connection.end_entity:
+                self.output.components[
+                    crossing[0].connection.end_entity
+                ].mirror_over_x()
+                self.output.repair_lines()
+            if prev_score > self.get_score():
+                self.output.components[
+                    crossing[0].connection.end_entity
+                ].mirror_over_x()
+                self.output.repair_lines()
+
+
+class LinesAvoidBoundingBoxes(Constraint):
+    def find_intersections(self):
+        res = []
+        for line in self.output.lines:
+            connection = line.connection
+            for segment in line.line_segments:
+                segment_bounding_box = BoundingBox.from_line_segment(segment)
+                for i, component in enumerate(self.output.components):
+                    if (
+                        component.bounding_box.intersects(segment_bounding_box)
+                        and connection.start_entity != i
+                        and connection.end_entity != i
+                    ):
+                        res.append((line, component))
+        return res
+
+    def get_score(self):
+        return -len(self.find_intersections())
+
+    def maximize(self):
+        for intersection in self.find_intersections():
+            pass
+
+
+class ComponentsAvoidOthers(Constraint):
+    def find_intersections(self):
+        res = []
+        for component_pair in itertools.combinations(self.output.components, 2):
+            if component_pair[0] == component_pair[1]:
+                continue
+            if component_pair[0].bounding_box.intersects(
+                component_pair[1].bounding_box
+            ):
+                res.append(component_pair)
+        return res
+
+    def get_score(self):
+        return -len(self.find_intersections())
+
+    def maximize(self):
+        for intersection in self.find_intersections():
+            pass
+
+
+class LinesAvoidOthers(Constraint):
+    def find_intersections(self):
+        res = []
+        for line_pair in itertools.combinations(self.output.lines, 2):
+            for i, segment_1 in enumerate(line_pair[0].line_segments):
+                segment_1_is_start = i == 0
+                segment_1_is_end = i == len(line_pair[0].line_segments) - 1
+                for segment_2 in line_pair[1].line_segments:
+                    segment_2_is_start = i == 0
+                    segment_2_is_end = i == len(line_pair[1].line_segments) - 1
+                    if (
+                        get_segment_slope(segment_1) == get_segment_slope(segment_2)
+                        and BoundingBox.from_line_segment(segment_1).intersects(
+                            BoundingBox.from_line_segment(segment_2)
+                        )
+                        and not (
+                            segment_1_is_start
+                            and segment_2_is_start
+                            or segment_1_is_end
+                            and segment_2_is_end
+                        )
+                    ):
+                        res.append(
+                            (
+                                *line_pair,
+                                get_segment_slope(segment_1),
+                                get_segment_length(segment_1),
+                                get_segment_length(segment_2),
+                            )
+                        )
+        return res
+
+    def get_score(self):
+        return -len(self.find_intersections())
+
+    def maximize(self):
+        for intersection in self.find_intersections():
+            if intersection[2] == 0:
+                intersection[0].locations[1] += Point(
+                    0, -self.options["min_line_spacing"]
+                )
+                intersection[0].locations[2] += Point(
+                    0, -self.options["min_line_spacing"]
+                )
+                intersection[1].locations[1] += Point(
+                    0, self.options["min_line_spacing"]
+                )
+                intersection[1].locations[2] += Point(
+                    0, self.options["min_line_spacing"]
+                )
+            elif intersection[3] > intersection[4]:
+                intersection[0].locations[1] += Point(
+                    -self.options["min_line_spacing"], 0
+                )
+                intersection[0].locations[2] += Point(
+                    -self.options["min_line_spacing"], 0
+                )
+                intersection[1].locations[1] += Point(
+                    self.options["min_line_spacing"], 0
+                )
+                intersection[1].locations[2] += Point(
+                    self.options["min_line_spacing"], 0
+                )
+            else:
+                intersection[0].locations[1] += Point(
+                    self.options["min_line_spacing"], 0
+                )
+                intersection[0].locations[2] += Point(
+                    self.options["min_line_spacing"], 0
+                )
+                intersection[1].locations[1] += Point(
+                    -self.options["min_line_spacing"], 0
+                )
+                intersection[1].locations[2] += Point(
+                    -self.options["min_line_spacing"], 0
+                )

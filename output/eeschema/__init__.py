@@ -24,28 +24,36 @@ class Schematic(SchematicElement):
 
 
 class SchematicWire(SchematicElement):
-    def __init__(self, line: entities.Line):
+    def __init__(self, line_segment: tuple):
         super().__init__(
             "wire",
             [
                 SchematicElement(
-                    "pts", [SchematicElement("xy", [p.x, p.y]) for p in line.locations]
+                    "pts", [SchematicElement("xy", [p.x, p.y]) for p in line_segment]
                 )
             ],
         )
 
 
 class SchematicComponent(SchematicElement):
-    def __init__(self, library_component, location):
+    def __init__(self, library_component, component):
         self.uuid = uuid.uuid1()
         children = [
             SchematicElement("lib_id", [library_component.full_name]),
-            SchematicElement("at", [location.x, location.y, 0]),
+            SchematicElement("at", [component.location.x, component.location.y, 0]),
+            *(
+                [SchematicElement("mirror", [SExpressionLiteral("x")])]
+                if component.mirrored_over_x
+                else []
+            ),
             SchematicElement("unit", [1]),
             SchematicElement("in_bom", [SExpressionLiteral("yes")]),
             SchematicElement("on_board", [SExpressionLiteral("yes")]),
             SchematicElement("uuid", [str(self.uuid)]),
-            *[prop.to_s_expression(location) for prop in library_component.properties],
+            *[
+                prop.to_s_expression(component.location)
+                for prop in library_component.properties
+            ],
         ]
         super().__init__("symbol", children)
 
@@ -82,9 +90,7 @@ class SchematicLabel(SchematicElement):
 
 def component_to_eeschema(component, library):
     if type(component) == entities.Cell:
-        return SchematicComponent(
-            library.symbols[component.human_name], component.location
-        )
+        return SchematicComponent(library.symbols[component.human_name], component)
     if type(component) == entities.CircuitInput:
         return SchematicLabel(component.identifier, "input", component.location)
     if type(component) == entities.CircuitOutput:
@@ -125,7 +131,11 @@ def il_to_eeschema(
             Schematic(
                 [lib_symbols]
                 + components
-                + [SchematicWire(line) for line in inp.lines]
+                + [
+                    SchematicWire(segment)
+                    for line in inp.lines
+                    for segment in line.line_segments
+                ]
                 + [symbol_instances]
             )
         )

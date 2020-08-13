@@ -31,6 +31,10 @@ def symbol_to_il(symbol):
     inputs = []
     outputs = []
     properties = []
+
+    ul_corner = Point(0, 0)
+    lr_corner = Point(0, 0)
+
     for prop in symbol.children:
         if type(prop) != SExpressionList:
             continue
@@ -68,6 +72,7 @@ def symbol_to_il(symbol):
                 if element.name == "pin":
                     pin_idx = -1
                     pin_location = Point(0, 0)
+
                     pin_type = element.children[0]
                     for attr in element.children:
                         if type(attr) != SExpressionList:
@@ -80,11 +85,29 @@ def symbol_to_il(symbol):
                         inputs.append(pin_idx)
                     else:
                         outputs.append(pin_idx)
+
+                    if pin_location.x < ul_corner.x:
+                        ul_corner.x = pin_location.x
+                    if pin_location.y < ul_corner.y:
+                        ul_corner.y = pin_location.y
+                    if pin_location.x > lr_corner.x:
+                        lr_corner.x = pin_location.x
+                    if pin_location.y > lr_corner.y:
+                        lr_corner.y = pin_location.y
                     pin_locations[pin_idx] = pin_location
     if name == "":
         raise Exception(f"Invalid symbol {symbol.children[0]}")
+    bounding_box = BoundingBox(ul_corner, lr_corner)
+    bounding_box.expand(0.1, 0.1)
     return LibraryComponent(
-        name, symbol.children[0], pin_locations, inputs, outputs, symbol, properties
+        name,
+        symbol.children[0],
+        pin_locations,
+        inputs,
+        outputs,
+        symbol,
+        properties,
+        bounding_box,
     )
 
 

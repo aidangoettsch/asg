@@ -120,7 +120,14 @@ class SPICETransformer(Transformer):
         self.fill_subcircuits = fill_subcircuits
         for fill_subcircuit in fill_subcircuits:
             self.cell_configs[fill_subcircuit] = LibraryComponent(
-                fill_subcircuit, fill_subcircuit, [], [], [], {}, []
+                fill_subcircuit,
+                fill_subcircuit,
+                [],
+                [],
+                [],
+                SExpressionList("", []),
+                [],
+                BoundingBox(Point(0, 0), Point(0, 0)),
             )
 
     def parameter(self, parameter):
@@ -140,13 +147,13 @@ class SPICETransformer(Transformer):
 
     def subcircuit(self, subcircuit):
         components = subcircuit[1:-1]
-        filter(
+        components = filter(
             lambda component: type(component) != SPICECell
             or component.cell_fullname not in self.fill_subcircuits,
             components,
         )
         return SPICESubcircuit(
-            subcircuit[0]["name"], subcircuit[0]["inouts"], components
+            subcircuit[0]["name"], subcircuit[0]["inouts"], list(components)
         )
 
     def component(self, component: list):

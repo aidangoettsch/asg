@@ -9,6 +9,7 @@ import argparse
 import os
 import sys
 import inspect
+import shutil
 
 # Add this directory to python path so that we can import from submodules
 current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -31,7 +32,7 @@ def main():
     else:
         print(f"Unsupported filetype {ext}")
         sys.exit(-1)
-    res = asg.constraint_asg(inp)
+    res, history = asg.constraint_asg(inp)
     if args.format is None:
         args.format = "eeschema"
     if args.format == "json":
@@ -43,6 +44,12 @@ def main():
     elif args.format == "eeschema":
         with open("output.kicad_sch", "w+") as out:
             output.eeschema.il_to_eeschema(res, out, library)
+
+        shutil.rmtree("out")
+        os.mkdir("out")
+        for i, e in enumerate(history):
+            with open(f"out/{i}_{type(e[0]).__name__}_{e[1]}.kicad_sch", "w+") as out:
+                output.eeschema.il_to_eeschema(e[2], out, library)
     else:
         print(f"Unknown output type {args.format}")
 

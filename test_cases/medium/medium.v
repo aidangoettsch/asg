@@ -1,4 +1,4 @@
-module medium (
+module med (
     input a,
     input b,
     input c,
@@ -8,5 +8,5 @@ module medium (
     wire vdd = 1'b1;
     wire gnd = 1'b0;
 
-    assign o = (~a & ~b) ^ (c | d);
+    assign o = (~a & ~c) ^ (b | d);
 endmodule
