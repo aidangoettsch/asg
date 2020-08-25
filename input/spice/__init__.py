@@ -119,7 +119,7 @@ class SPICETransformer(Transformer):
         self.cell_configs = cell_configs
         self.fill_subcircuits = fill_subcircuits
         for fill_subcircuit in fill_subcircuits:
-            self.cell_configs[fill_subcircuit] = LibraryComponent(
+            self.cell_configs[fill_subcircuit] = LibrarySymbol(
                 fill_subcircuit,
                 fill_subcircuit,
                 [],

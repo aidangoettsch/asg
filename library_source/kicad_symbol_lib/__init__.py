@@ -2,10 +2,14 @@ from intermediate_lang import *
 from entities import *
 from lark import Lark, Transformer
 import os
-from s_expression import *
+from grammar import *
 
 
 class SExpressionTransformer(Transformer):
+    """
+    Transform the parsed tree to an SExpressionList object. Also handles strings and literals.
+    """
+
     def string(self, string):
         if len(string) > 0:
             return string[0].value
@@ -13,7 +17,7 @@ class SExpressionTransformer(Transformer):
             return ""
 
     def literal(self, literal):
-        return SExpressionLiteral(literal[0].value)
+        return Literal(literal[0].value)
 
     def number(self, num):
         if "." in num[0].value:
@@ -98,8 +102,8 @@ def symbol_to_il(symbol):
     if name == "":
         raise Exception(f"Invalid symbol {symbol.children[0]}")
     bounding_box = BoundingBox(ul_corner, lr_corner)
-    bounding_box.expand(0.1, 0.1)
-    return LibraryComponent(
+    bounding_box.expand(2, 0.1)
+    return LibrarySymbol(
         name,
         symbol.children[0],
         pin_locations,
@@ -111,7 +115,15 @@ def symbol_to_il(symbol):
     )
 
 
-def s_expression_to_il(library_file, options_override={}):
+def s_expression_to_il(library_file, options_override: Dict = None):
+    """
+    Convert an s-expression file to an internal representation
+    :param library_file: A file descriptor
+    :param options_override:
+    :return:
+    """
+    if options_override is None:
+        options_override = {}
     options = {
         "gate_level": True,
     }

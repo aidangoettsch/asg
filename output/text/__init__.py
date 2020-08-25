@@ -1,11 +1,7 @@
-from io import TextIOWrapper
-
 import intermediate_lang
 
 
-def il_to_markdown(
-    output_il: intermediate_lang.OutputIL, output_file: TextIOWrapper
-) -> None:
+def il_to_markdown(output_il: intermediate_lang.OutputIL, output_file) -> None:
     output_file.write("# Components\n")
     for component in output_il.components:
         output_file.write(f"- {component}\n")

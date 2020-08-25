@@ -1,0 +1,33 @@
+%import common.SIGNED_NUMBER    -> NUMBER
+%import common.WS
+%import common.WS_INLINE
+%import common.LETTER
+%import common.DIGIT
+%ignore WS_INLINE
+
+STRING: ("_"|LETTER|DIGIT|"#"|"."|"-"|":"|"~"|"@")+
+
+literal: STRING
+number: NUMBER
+string: "\"" (STRING|" "|"=")* "\""
+value: literal | string
+key: literal
+key_value_pair: key "=" value
+block_member: literal | key_value_pair
+block: "{" (block_member | WS)* "}"
+
+statement_prefix: "v" -> version
+                | "G" -> general_info
+                | "V" -> idk1
+                | "S" -> idk2
+                | "E" -> idk3
+                | "P" -> idk4
+                | "L" -> line
+                | "B" -> pin
+                | "A" -> arc
+
+statement_body: number* block
+
+text: "T" block statement_body
+statement: statement_prefix statement_body
+file: ((statement | text) WS)*

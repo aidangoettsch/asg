@@ -10,7 +10,7 @@ class SExpressionList:
         return f"({self.name} {child_string})"
 
 
-class SExpressionLiteral:
+class Literal:
     def __init__(self, value):
         self.value = value
 

@@ -1,7 +1,9 @@
 import uuid
+from typing import Tuple
+
 import intermediate_lang
 import entities
-from s_expression import *
+from grammar import *
 
 
 class SchematicElement(SExpressionList):
@@ -24,7 +26,7 @@ class Schematic(SchematicElement):
 
 
 class SchematicWire(SchematicElement):
-    def __init__(self, line_segment: tuple):
+    def __init__(self, line_segment: Tuple[entities.Point]):
         super().__init__(
             "wire",
             [
@@ -42,13 +44,13 @@ class SchematicComponent(SchematicElement):
             SchematicElement("lib_id", [library_component.full_name]),
             SchematicElement("at", [component.location.x, component.location.y, 0]),
             *(
-                [SchematicElement("mirror", [SExpressionLiteral("x")])]
+                [SchematicElement("mirror", [Literal("x")])]
                 if component.mirrored_over_x
                 else []
             ),
             SchematicElement("unit", [1]),
-            SchematicElement("in_bom", [SExpressionLiteral("yes")]),
-            SchematicElement("on_board", [SExpressionLiteral("yes")]),
+            SchematicElement("in_bom", [Literal("yes")]),
+            SchematicElement("on_board", [Literal("yes")]),
             SchematicElement("uuid", [str(self.uuid)]),
             *[
                 prop.to_s_expression(component.location)
@@ -64,7 +66,7 @@ class SchematicLabel(SchematicElement):
             "global_label",
             [
                 name,
-                SchematicElement("shape", [SExpressionLiteral(direction)]),
+                SchematicElement("shape", [Literal(direction)]),
                 SchematicElement(
                     "at", [location.x, location.y, 180 if direction == "input" else 0]
                 ),
@@ -76,11 +78,7 @@ class SchematicLabel(SchematicElement):
                         ),
                         SchematicElement(
                             "justify",
-                            [
-                                SExpressionLiteral(
-                                    "right" if direction == "input" else "left"
-                                )
-                            ],
+                            [Literal("right" if direction == "input" else "left")],
                         ),
                     ],
                 ),

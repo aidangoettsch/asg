@@ -5,7 +5,12 @@ from entities import *
 import itertools
 
 
-def get_segment_slope(segment):
+def get_segment_slope(segment: Tuple[Point]):
+    """
+    Find the slope of a line segment
+    :param segment: A pair of points that represent a line segment
+    :return: The slope of segment
+    """
     return (
         (segment[0].y - segment[1].y) / (segment[0].x - segment[1].x)
         if (segment[0].x - segment[1].x) != 0
@@ -14,12 +19,21 @@ def get_segment_slope(segment):
 
 
 def get_segment_length(segment):
+    """
+    Find the length of a line segment
+    :param segment: A pair of points that represent a line segment
+    :return: The length of segment
+    """
     return (
         ((segment[0].y - segment[1].y) ** 2) + ((segment[0].x - segment[1].x) ** 2)
     ) ** 0.5
 
 
 class Constraint:
+    """
+    A restriction to apply to a schematic in order to optimize it
+    """
+
     def __init__(self, output: OutputIL, options):
         self.output = output
         self.options = options
