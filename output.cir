@@ -1,0 +1,7 @@
+.title KiCad schematic
+.include "transistor_sample.mod"
+U2 Net-_U1-Pad1_ Net-_U2-Pad4_ OAI21X1
+U_3_1 Net-_U2-Pad4_ Net-_U_3_-Pad3_ BUFX2
+U1 Net-_U1-Pad0_ Net-_U1-Pad1_ INVX1
+QU3 Net-_U3-Pad1_ Net-_U3-Pad3_ Net-_U3-Pad4_ 2N2222
+.end
