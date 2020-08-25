@@ -70,7 +70,7 @@ def symbol_to_il(symbol):
                 if type(element) != SExpressionList:
                     continue
                 if element.name == "pin":
-                    pin_idx = -1
+                    pin_name = -1
                     pin_location = Point(0, 0)
 
                     pin_type = element.children[0]
@@ -79,12 +79,12 @@ def symbol_to_il(symbol):
                             continue
                         if attr.name == "at":
                             pin_location = Point(attr.children[0], -attr.children[1])
-                        if attr.name == "number":
-                            pin_idx = int(attr.children[0])
+                        if attr.name == "name":
+                            pin_name = attr.children[0]
                     if pin_type == "input":
-                        inputs.append(pin_idx)
+                        inputs.append(pin_name)
                     else:
-                        outputs.append(pin_idx)
+                        outputs.append(pin_name)
 
                     if pin_location.x < ul_corner.x:
                         ul_corner.x = pin_location.x
@@ -94,7 +94,7 @@ def symbol_to_il(symbol):
                         lr_corner.x = pin_location.x
                     if pin_location.y > lr_corner.y:
                         lr_corner.y = pin_location.y
-                    pin_locations[pin_idx] = pin_location
+                    pin_locations[pin_name] = pin_location
     if name == "":
         raise Exception(f"Invalid symbol {symbol.children[0]}")
     bounding_box = BoundingBox(ul_corner, lr_corner)
@@ -111,10 +111,10 @@ def symbol_to_il(symbol):
     )
 
 
-def s_expression_to_il(library_file, options_override={}):
-    options = {
-        "gate_level": True,
-    }
+def s_expression_to_il(library_file, options_override=None):
+    if options_override is None:
+        options_override = {}
+    options = {}
     dict.update(options, options_override)
 
     # Get paths relative to the location of this file, not the root of the module

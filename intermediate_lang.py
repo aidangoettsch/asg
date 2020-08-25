@@ -2,9 +2,10 @@ from entities import *
 
 
 class InputIL:
-    def __init__(self, components, connections):
+    def __init__(self, components, connections, inouts):
         self.components = components
         self.connections = connections
+        self.inouts = inouts
 
 
 class OutputIL:

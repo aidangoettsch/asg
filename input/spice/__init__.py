@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from typing import Dict
 
 from intermediate_lang import *
 from entities import *
@@ -29,6 +30,10 @@ class SPICEMosfet(SPICEComponent):
 
     def __str__(self):
         return f"MOSFET connected to {', '.join(self.inouts)} with {str(self.params)}"
+
+    @property
+    def entity(self) -> Component:
+        return Mosfet(self.fet_type)
 
 
 class SPICECell(SPICEComponent):
@@ -174,9 +179,11 @@ class SPICETransformer(Transformer):
         return component_types[component[0].data](component[1], inouts, dict(params))
 
 
-def spice_to_il(input_file, subcircuit, library, options_override={}) -> InputIL:
+def spice_to_il(input_file, target_subcircuit, library, options_override=None) -> InputIL:
+    if options_override is None:
+        options_override = {}
     options = {
-        "gate_level": True,
+        "depth": 0,
         "filter_power": ["vdd", "gnd"],
         "fill_subcircuit": ["FILL"],
     }
@@ -192,8 +199,10 @@ def spice_to_il(input_file, subcircuit, library, options_override={}) -> InputIL
         )
     parsed = parser.parse(input_file.read())
 
+    subcircuits = {}
+
     for statement in parsed.children:
-        if isinstance(statement, SPICESubcircuit) and statement.name == subcircuit:
+        if isinstance(statement, SPICESubcircuit):
             components = list(
                 filter(
                     lambda c: c.identifier not in options["filter_power"],
@@ -204,14 +213,25 @@ def spice_to_il(input_file, subcircuit, library, options_override={}) -> InputIL
             nets = {}
 
             for i, component in enumerate(components):
-                for j, inout in enumerate(component.inouts):
+                if type(component) == SPICECell:
+                    if component.cell_fullname in subcircuits:
+                        cell_def = subcircuits[component.cell_fullname]
+                    else:
+                        print(
+                            f"Error parsing SPICE file. Subcircuit {component.cell_fullname} referenced but not "
+                            f"defined or referenced before definition. "
+                        )
+                        sys.exit(-1)
+                for pin, inout in enumerate(component.inouts):
+                    if type(component) == SPICECell:
+                        pin = cell_def.inouts[pin]
                     # Ignore pins that aren't I/O to remove Vdd and GND from the schematic
                     if (
                         isinstance(component, SPICEInout)
-                        or j in component.entity.inputs
-                        or j in component.entity.outputs
+                        or pin in component.entity.inputs
+                        or pin in component.entity.outputs
                     ):
-                        nets.setdefault(inout, []).append((i, j))
+                        nets.setdefault(inout, []).append((i, pin))
 
             connections = []
             for net in nets.values():
@@ -261,8 +281,23 @@ def spice_to_il(input_file, subcircuit, library, options_override={}) -> InputIL
                         and connection.end_pin in component_end.entity.outputs
                     ):
                         component_start.type = "Output"
-            return InputIL([component.entity for component in components], connections)
+            subcircuits[statement.name] = InputIL([component.entity for component in components], connections, statement.inouts)
 
+    if target_subcircuit in subcircuits:
+        depth = options["depth"]
+
+        # Dig down and pull components up [depth] levels
+        top_level = subcircuits[target_subcircuit]
+        while depth > 0:
+            components = []
+            connections = top_level.connections
+            for i, component in enumerate(top_level.components):
+                if type(component) != Cell:
+                    components.append(component)
+
+                    continue
+                subcircuit = subcircuits[component.human_name]
+        return top_level
     print(
         "Error parsing SPICE file. Make sure a subcircuit with the same name as the file is present."
     )
