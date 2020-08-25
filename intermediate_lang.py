@@ -7,7 +7,12 @@ class InputIL:
     Represents a circuit being input to the ASG
     """
 
-    def __init__(self, components: List[Component], connections: List[Connection]):
+    def __init__(
+        self,
+        components: List[Component],
+        connections: List[Connection],
+        inouts: List[str],
+    ):
         """
         Create an InputIL
         :param components: Components in the circuit
@@ -15,6 +20,7 @@ class InputIL:
         """
         self.components = components
         self.connections = connections
+        self.inouts = inouts
 
 
 class OutputIL:

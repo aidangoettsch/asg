@@ -1,4 +1,4 @@
-(kicad_symbol_lib (version 20200126) (host kicad_symbol_editor "(5.99.0-2317-g779ed4058)")
+(kicad_symbol_lib (version 20200820) (host kicad_symbol_editor "(5.99.0-2967-g70c8eb5be)")
   (symbol "test:BUFX2"
     (property "Reference" "U" (id 0) (at 0 0 0)
       (effects (font (size 1.27 1.27)))
@@ -14,15 +14,20 @@
     )
     (symbol "BUFX2_1_0"
       (polyline
-        (pts (xy -2.54 3.81) (xy -2.54 -3.81) (xy 5.08 0) (xy -2.54 3.81))
+        (pts
+          (xy -2.54 3.81)
+          (xy -2.54 -3.81)
+          (xy 5.08 0)
+          (xy -2.54 3.81)
+        )
         (stroke (width 0.254)) (fill (type background))
       )
       (pin input line (at -6.35 0 0) (length 3.81)
-        (name "~" (effects (font (size 1.27 1.27))))
+        (name "A" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
       (pin output line (at 8.89 0 180) (length 3.81)
-        (name "~" (effects (font (size 1.27 1.27))))
+        (name "Y" (effects (font (size 1.27 1.27))))
         (number "3" (effects (font (size 1.27 1.27))))
       )
     )
@@ -42,15 +47,20 @@
     )
     (symbol "INVX1_1_0"
       (polyline
-        (pts (xy -2.54 3.81) (xy -2.54 -3.81) (xy 5.08 0) (xy -2.54 3.81))
+        (pts
+          (xy -2.54 3.81)
+          (xy -2.54 -3.81)
+          (xy 5.08 0)
+          (xy -2.54 3.81)
+        )
         (stroke (width 0.254)) (fill (type background))
       )
       (pin input line (at -6.35 0 0) (length 3.81)
-        (name "~" (effects (font (size 1.27 1.27))))
+        (name "A" (effects (font (size 1.27 1.27))))
         (number "0" (effects (font (size 1.27 1.27))))
       )
       (pin output inverted (at 8.89 0 180) (length 3.81)
-        (name "~" (effects (font (size 1.27 1.27))))
+        (name "Y" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
     )
@@ -73,7 +83,12 @@
         (stroke (width 0.254)) (fill (type background))
       )
       (polyline
-        (pts (xy 1.27 11.43) (xy -2.54 11.43) (xy -2.54 3.81) (xy 1.27 3.81))
+        (pts
+          (xy 1.27 11.43)
+          (xy -2.54 11.43)
+          (xy -2.54 3.81)
+          (xy 1.27 3.81)
+        )
         (stroke (width 0.254)) (fill (type background))
       )
       (pin input line (at -6.35 10.16 0) (length 3.81)

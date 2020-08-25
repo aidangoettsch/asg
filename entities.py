@@ -409,7 +409,18 @@ class Diode(Component):
         self.pin_locations = [Point(-10, 0), Point(10, 0)]
         self.inputs = [1]
         self.outputs = [0]
-        self.resistance_ohms = model
+        self.model = model
+
+
+class Mosfet(Component):
+    def __init__(self, fet_type):
+        super().__init__()
+        self.human_name = "MOSFET"
+        self.pin_count = 2
+        self.pin_locations = [Point(-10, 0), Point(10, 0)]
+        self.inputs = [1]
+        self.outputs = [0]
+        self.fet_type = fet_type
 
 
 class Cell(Component):
