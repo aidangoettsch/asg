@@ -1,5 +1,6 @@
 from entities import *
 from typing import List
+from bentley_ottmann.planar import segments_intersections
 
 
 class InputIL:
@@ -32,6 +33,7 @@ class OutputIL:
         self.components = []
         self.connections = []
         self.lines = []
+        self.line_bins = {}
 
     def create_lines(self) -> None:
         """
@@ -58,7 +60,7 @@ class OutputIL:
 
         self.lines = res
 
-    def repair_lines(self):
+    def repair_lines(self) -> None:
         """
         Draws an initial set of lines between components if they don't exist, shifts existing lines to match component locations
         :return: None
@@ -91,7 +93,6 @@ class OutputIL:
                     and end_pin_location == line.locations[-1]
                 ):
                     # Change locations of lines when components move
-                    print(f"redrawing line from {start_component} to {end_component}")
                     if len(line.locations) < 4:
                         # Add a bend if the line was previously straight
                         x_midpoint = (start_pin_location.x + end_pin_location.x) / 2
@@ -105,6 +106,44 @@ class OutputIL:
                         line.locations[1].y = start_pin_location.y
                         line.locations[-2].y = end_pin_location.y
                         line.locations[-1] = end_pin_location
+
+    def create_line_bins(self, bin_size):
+        self.line_bins = {}
+        for line in self.lines:
+            for segment in line.line_segments:
+                bin_1 = segment[0] / bin_size
+                bin_2 = segment[0] / bin_size
+                if bin_1 == bin_2:
+                    bins = [bin_1]
+                else:
+                    bins = [bin_2]
+                    for bin_x in range(bin_1.x, bin_2.x):
+                        for bin_y in range(bin_1.y, bin_2.y):
+                            bins.append(Point(bin_x, bin_y))
+                for line_bin in bins:
+                    if bin_1 not in self.line_bins:
+                        self.line_bins[line_bin] = []
+                    self.line_bins[line_bin].append(line)
+
+    def get_line_intersects_line(self) -> List[List[Line]]:
+        """
+        Finds lines where two of their segments intersect each other.
+        :return: A list of line segment pairs
+        """
+        intersections = []
+        for line_bin in self.line_bins.values():
+            segments = []
+            line_idx_map = []
+            for line in line_bin:
+                for segment in line.line_segments:
+                    if segment[0] != segment[1]:
+                        segments.append((segment[0].as_tuple(), segment[1].as_tuple()))
+                        line_idx_map.append(line)
+
+            for collision_point in segments_intersections(segments).values():
+                for intersection in collision_point:
+                    intersections.append([line_idx_map[i] for i in intersection])
+        return intersections
 
 
 class LibraryIL:

@@ -115,18 +115,12 @@ def symbol_to_il(symbol):
     )
 
 
-def s_expression_to_il(library_file, options_override: Dict = None):
+def s_expression_to_il(library_file):
     """
     Convert an s-expression file to an internal representation
     :param library_file: A file descriptor
-    :param options_override:
     :return:
     """
-    if options_override is None:
-        options_override = {}
-    options = {
-        "gate_level": True,
-    }
 
     # Get paths relative to the location of this file, not the root of the module
     script_dir = os.path.dirname(os.path.realpath(__file__))

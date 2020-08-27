@@ -8,10 +8,10 @@ constraint_weights = {
     LTRConstraint: 10,
     VerticalSortConstraint: 3,
     InputYDegridConstraint: 10,
+    LinesAvoidOthers: 20,
     UntangleConstraint: 10,
-    LinesAvoidBoundingBoxes: 10,
+    LinesAvoidBoundingBoxes: 20,
     ComponentsAvoidOthers: 100,
-    LinesAvoidOthers: 10,
 }
 
 
@@ -31,11 +31,13 @@ def constraint_asg(inp, options_override=None):
         options_override = {}
 
     options = {
-        "starting_x": 25.4,
-        "starting_y": 25.4,
-        "column_gap": 25.4,
-        "row_gap": 25.4,
-        "min_line_spacing": 1.27,
+        "starting_x": 250,
+        "starting_y": 250,
+        "column_gap": 250,
+        "row_gap": 250,
+        "min_line_spacing": 10,
+        "bounding_box_extension": 20,
+        "bin_size": 100,
     }
     dict.update(options, options_override)
 
@@ -65,6 +67,7 @@ def constraint_asg(inp, options_override=None):
     i = 0
     constraint_instances[0].maximize()
     res.repair_lines()
+    res.create_line_bins(options["bin_size"])
     peak_score, peak_score_breakdown = calculate_score(constraint_instances)
     for constraint in peak_score_breakdown:
         print(constraint[0].__name__, constraint[1])
@@ -72,6 +75,7 @@ def constraint_asg(inp, options_override=None):
         constraint = constraint_instances[(i % (len(constraint_instances) - 1)) + 1]
         constraint.maximize()
         res.repair_lines()
+        res.create_line_bins(options["bin_size"])
         score, score_breakdown = calculate_score(constraint_instances)
         if score - peak_score > 0.1:
             peak_score = score

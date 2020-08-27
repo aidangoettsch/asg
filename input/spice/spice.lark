@@ -6,7 +6,7 @@
 %ignore WS_INLINE
 %ignore WS "+"
 
-STRING: ("_"|LETTER|DIGIT|"#"|"."|"["|"]"|"$"|"+")+
+STRING: ("_"|LETTER|DIGIT|"#"|"."|"["|"]"|"$"|"+"|"\\")+
 COMMENT: "*" /[^\n]/* "\n"+
 %ignore COMMENT
 

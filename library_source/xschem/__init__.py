@@ -72,12 +72,7 @@ class XSchemSymbolTransformer(Transformer):
                         body = body[:-1]
                         pin_corner_1 = Point(body[1], body[2])
                         pin_corner_2 = Point(body[3], body[4])
-                        pin_location = Point(
-                            pin_corner_1.x
-                            if abs(pin_corner_1.x) > abs(pin_corner_2.x)
-                            else pin_corner_2.x,
-                            (pin_corner_1.y + pin_corner_2.y) / 2,
-                        )
+                        pin_location = (pin_corner_1 + pin_corner_2) / 2
                         pin_locations[properties_dict["name"]] = pin_location
 
                         if properties_dict["dir"] == "in":
@@ -106,17 +101,12 @@ class XSchemSymbolTransformer(Transformer):
         )
 
 
-def xschem_to_il(library_dir: List[os.DirEntry], options_override: Dict = None):
+def xschem_to_il(library_dir: List[os.DirEntry]):
     """
     Convert a directory of Xschem symbol files to an internal representation
     :param library_dir: A list of directory entries for a directory which contains Xschem symbol files
-    :param options_override: Additional options for the parser
     :return: A representation of the library as [LibraryComponent]s
     """
-    if options_override is None:
-        options_override = {}
-    options = {}
-    dict.update(options, options_override)
 
     # Get paths relative to the location of this file, not the root of the module
     script_dir = os.path.dirname(os.path.realpath(__file__))

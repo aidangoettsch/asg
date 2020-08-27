@@ -24,6 +24,22 @@ class Point:
         """
         return Point(self.x + other.x, self.y + other.y)
 
+    def __mul__(self, other: float):
+        """
+        Shift the point further from the origin by a factor of other
+        :param other: Scalar to multiply by
+        :return: A point multiplied by the scalar other
+        """
+        return Point(self.x / other, self.y / other)
+
+    def __truediv__(self, other: float):
+        """
+        Shift the point closer to the origin by a factor of other
+        :param other: Scalar to divide by
+        :return: A point divided by the scalar other
+        """
+        return Point(self.x / other, self.y / other)
+
     def __eq__(self, other: "Point"):
         """
         Check if two points are equal to each other
@@ -31,6 +47,15 @@ class Point:
         :return: If this point is at the same location as other
         """
         return self.x == other.x and self.y == other.y
+
+    def as_tuple(self) -> Tuple[float, float]:
+        return self.x, self.y
+
+    def __hash__(self):
+        return int(self.x * 33 + self.y)
+
+    def __repr__(self):
+        return f"Point({self.x}, {self.y})"
 
     def __str__(self):
         return f"({self.x}, {self.y})"
@@ -42,15 +67,22 @@ class Connection:
     """
 
     def __init__(
-        self, start_entity: int, start_pin: int, end_entity: int, end_pin: int
+        self,
+        net_name: str,
+        start_entity: int,
+        start_pin: int,
+        end_entity: int,
+        end_pin: int,
     ):
         """
         Create a connection
+        :param net_name: The name of the net from the netlist
         :param start_entity: The index of the component where the connection starts
         :param start_pin: The index of the pin on the component where the connection starts
         :param end_entity: The index of the component where the connection ends
         :param end_pin: The index of the pin on the component where the connection ends
         """
+        self.net_name = net_name
         self.start_entity = start_entity
         self.start_pin = start_pin
         self.end_entity = end_entity
@@ -69,7 +101,7 @@ class Line:
         :param locations: A list of points which represent the route the line travels
         """
         self.connection = connection
-        self.locations = locations
+        self.locations = list(locations)
 
     @property
     def line_segments(self):
@@ -153,6 +185,14 @@ class BoundingBox:
         self.ul_corner.y -= y_len / 2
         self.lr_corner.y += y_len / 2
 
+    @property
+    def center(self) -> Point:
+        """
+        The center of the bounding box
+        :return: The center of the bounding box
+        """
+        return (self.ul_corner + self.lr_corner) / 2
+
     def __add__(self, other: Point) -> "BoundingBox":
         """
         Move the center of a bounding box, keeping the size the same
@@ -167,13 +207,14 @@ class Component:
     A component in a schematic
     """
 
-    def __init__(self):
+    def __init__(self, netlist_id):
         """
         Create a component
         """
+        self.netlist_id = netlist_id
         self.human_name = ""
         self.pin_count = -1
-        self.pin_locations = []
+        self.pin_locations = {}
         self.inputs = []
         self.outputs = []
         self.location = Point(0, 0)
@@ -329,11 +370,13 @@ class CircuitInout(Component):
         Creates a CircuitInout
         :param identifier: The identifier of this input or output
         """
-        super().__init__()
+        super().__init__(identifier)
         self.human_name = "Inout" + ("" if identifier == "" else (" " + identifier))
         self.identifier = identifier
         self.pin_count = 1
-        self.pin_locations = [Point(0, 0)]
+        self.pin_locations = {
+            0: Point(0, 0),
+        }
         self.inputs = [0]
         self.outputs = [0]
 
@@ -348,11 +391,13 @@ class CircuitInput(Component):
         Creates a CircuitInput
         :param identifier: The identifier of this input
         """
-        super().__init__()
+        super().__init__(identifier)
         self.human_name = "Input" + ("" if identifier == "" else (" " + identifier))
         self.identifier = identifier
         self.pin_count = 1
-        self.pin_locations = [Point(0, 0)]
+        self.pin_locations = {
+            0: Point(0, 0),
+        }
         self.outputs = [0]
 
 
@@ -366,11 +411,13 @@ class CircuitOutput(Component):
         Creates a CircuitOutput
         :param identifier: The identifier of this output
         """
-        super().__init__()
+        super().__init__(identifier)
         self.human_name = "Output" + ("" if identifier == "" else (" " + identifier))
         self.identifier = identifier
         self.pin_count = 1
-        self.pin_locations = [Point(0, 0)]
+        self.pin_locations = {
+            0: Point(0, 0),
+        }
         self.inputs = [0]
 
 
@@ -379,15 +426,15 @@ class Resistor(Component):
     A resistor inside the circuit
     """
 
-    def __init__(self, resistance_ohms: float):
+    def __init__(self, netlist_id: str, resistance_ohms: float):
         """
         Create a Resistor
         :param resistance_ohms: The resistance of this resistor in ohms
         """
-        super().__init__()
+        super().__init__(netlist_id)
         self.human_name = "resistor"
         self.pin_count = 2
-        self.pin_locations = [Point(-10, 0), Point(10, 0)]
+        self.pin_locations = {0: Point(-10, 0), 1: Point(10, 0)}
         self.inputs = [1]
         self.outputs = [0]
         self.resistance_ohms = resistance_ohms
@@ -398,26 +445,26 @@ class Diode(Component):
     A diode inside the circuit
     """
 
-    def __init__(self, model):
+    def __init__(self, netlist_id: str, model: str):
         """
         Create a Diode
         :param model: The model of this diode
         """
-        super().__init__()
+        super().__init__(netlist_id)
         self.human_name = "diode"
         self.pin_count = 2
-        self.pin_locations = [Point(-10, 0), Point(10, 0)]
+        self.pin_locations = {0: Point(-10, 0), 1: Point(10, 0)}
         self.inputs = [1]
         self.outputs = [0]
         self.model = model
 
 
 class Mosfet(Component):
-    def __init__(self, fet_type):
-        super().__init__()
+    def __init__(self, netlist_id: str, fet_type: str):
+        super().__init__(netlist_id)
         self.human_name = "MOSFET"
         self.pin_count = 2
-        self.pin_locations = [Point(-10, 0), Point(10, 0)]
+        self.pin_locations = {0: Point(-10, 0), 1: Point(10, 0)}
         self.inputs = [1]
         self.outputs = [0]
         self.fet_type = fet_type
@@ -428,12 +475,12 @@ class Cell(Component):
     A cell inside the circuit which is defined by a symbol
     """
 
-    def __init__(self, cell_config: LibrarySymbol):
+    def __init__(self, netlist_id: str, cell_config: LibrarySymbol):
         """
         Create a Cell
         :param cell_config: Information from the library
         """
-        super().__init__()
+        super().__init__(netlist_id)
         self.human_name = cell_config.name
         self.pin_count = cell_config.pin_count
         self.inputs = cell_config.inputs

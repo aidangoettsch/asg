@@ -33,7 +33,7 @@ class SPICEMosfet(SPICEComponent):
 
     @property
     def entity(self) -> Component:
-        return Mosfet(self.fet_type)
+        return Mosfet(f"M{self.identifier}", self.fet_type)
 
 
 class SPICECell(SPICEComponent):
@@ -49,7 +49,7 @@ class SPICECell(SPICEComponent):
 
     @property
     def entity(self) -> Component:
-        return Cell(self.cell_config)
+        return Cell(f"X{self.identifier}", self.cell_config)
 
 
 class SPICEResistor(SPICEComponent):
@@ -64,7 +64,7 @@ class SPICEResistor(SPICEComponent):
 
     @property
     def entity(self) -> Component:
-        return Resistor(self.resistance_ohms)
+        return Resistor(f"R{self.identifier}", self.resistance_ohms)
 
 
 class SPICEDiode(SPICEComponent):
@@ -79,7 +79,7 @@ class SPICEDiode(SPICEComponent):
 
     @property
     def entity(self) -> Component:
-        return Diode(self.model)
+        return Diode(f"D{self.identifier}", self.model)
 
 
 class SPICEInout(SPICEComponent):
@@ -236,7 +236,7 @@ def spice_to_il(
                         nets.setdefault(inout, []).append((i, pin))
 
             connections = []
-            for net in nets.values():
+            for name, net in nets.items():
                 for src, dest in itertools.combinations(net, 2):
                     if not (
                         isinstance(components[src[0]], SPICEInout)
@@ -253,9 +253,9 @@ def spice_to_il(
                         ):
                             continue
                     if src[1] in components[src[0]].entity.inputs:
-                        connections.append(Connection(*dest, *src))
+                        connections.append(Connection(name, *dest, *src))
                     else:
-                        connections.append(Connection(*src, *dest))
+                        connections.append(Connection(name, *src, *dest))
 
             for connection in connections:
                 component_start = components[connection.start_entity]
@@ -294,15 +294,30 @@ def spice_to_il(
 
         # Dig down and pull components up [depth] levels
         top_level = subcircuits[target_subcircuit]
-        while depth > 0:
-            components = []
-            connections = top_level.connections
-            for i, component in enumerate(top_level.components):
-                if type(component) != Cell:
-                    components.append(component)
+        # TODO: Finish this
+        # while depth > 0:
+        #     components = []
+        #     connections = []
+        #     index_map = {}
+        #     for i, component in enumerate(top_level.components):
+        #         if type(component) != Cell:
+        #             index_map[i] = len(components)
+        #             components.append(component)
+        #
+        #             continue
+        #         index_map
+        #         subcircuit_index_map = {}
+        #         subcircuit = subcircuits[component.human_name]
+        #         for j, subcircuit_component in enumerate(subcircuit.components):
+        #             if type(subcircuit_component) == CircuitOutput or \
+        #                     type(subcircuit_component) == CircuitInput or \
+        #                     type(subcircuit_component) == CircuitInout:
+        #                 continue
+        #             subcircuit_index_map[j] = len(components)
+        #             components.append(subcircuit_component)
+        #         for subcircuit_connection in subcircuit.connections:
+        #             connections
 
-                    continue
-                subcircuit = subcircuits[component.human_name]
         return top_level
     print(
         "Error parsing SPICE file. Make sure a subcircuit with the same name as the file is present."
