@@ -1,5 +1,5 @@
 from grammar import *
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Union
 
 
 class Point:
@@ -334,7 +334,7 @@ class LibrarySymbol:
         pin_locations: Dict[int, Point],
         inputs: List[int],
         outputs: List[int],
-        s_expression: SExpressionList,
+        raw_data: Union[SExpressionList, str],
         properties: List[LibraryProperty],
         bounding_box: BoundingBox,
     ):
@@ -345,7 +345,7 @@ class LibrarySymbol:
         :param pin_locations: The locations of pins on this symbol
         :param inputs: Which pins on this symbol are inputs
         :param outputs: Which pins on this symbol are outputs
-        :param s_expression: The s-expression which represents this symbol in EESchema
+        :param raw_data: Raw data for this symbol which comes from the specific schematic software
         :param properties: Properties of this symbol in EESchema
         :param bounding_box: The bounding box of this symbol
         """
@@ -355,7 +355,7 @@ class LibrarySymbol:
         self.pin_locations = pin_locations
         self.inputs = inputs
         self.outputs = outputs
-        self.s_expression = s_expression
+        self.raw_data = raw_data
         self.properties = properties
         self.bounding_box = bounding_box
 
@@ -486,4 +486,5 @@ class Cell(Component):
         self.inputs = cell_config.inputs
         self.outputs = cell_config.outputs
         self.pin_locations = cell_config.pin_locations
+        self.raw_data = cell_config.raw_data
         self.bounding_box_backing = cell_config.bounding_box

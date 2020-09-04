@@ -10,9 +10,10 @@ class XSchemSymbolTransformer(Transformer):
     Transform the parsed tree to an SExpressionList object. Also handles strings and literals.
     """
 
-    def __init__(self, name):
+    def __init__(self, name, raw_data):
         super().__init__()
         self.name = name
+        self.raw_data = raw_data
 
     def string(self, string: List[Token]) -> str:
         if len(string) > 0:
@@ -61,13 +62,17 @@ class XSchemSymbolTransformer(Transformer):
         for statement in file:
             if type(statement) == Tree:
                 if type(statement.children[0]) == Tree:
-                    if statement.children[0].data == "pin":
+                    if statement.children[0].data == "rectangle":
                         body = statement.children[1].children
                         properties = body[-1]
                         properties_dict = {}
                         for prop in properties:
                             if type(prop) == tuple:
                                 properties_dict[prop[0].value] = prop[1].value
+
+                        # Skip rectangles that don't look like pins
+                        if "name" not in properties or "dir" not in properties:
+                            continue
 
                         body = body[:-1]
                         pin_corner_1 = Point(body[1], body[2])
@@ -80,6 +85,7 @@ class XSchemSymbolTransformer(Transformer):
                         if properties_dict["dir"] == "out":
                             outputs.append(properties_dict["name"])
 
+                        # If this pin is outside the bounding box, move the box to include it
                         if pin_location.x < ul_corner.x:
                             ul_corner.x = pin_location.x
                         if pin_location.y < ul_corner.y:
@@ -89,13 +95,14 @@ class XSchemSymbolTransformer(Transformer):
                         if pin_location.y > lr_corner.y:
                             lr_corner.y = pin_location.y
 
+        raw_data = "\n".join(self.raw_data.split("\n")[1:])
         return LibrarySymbol(
             self.name,
             self.name,
             pin_locations,
             inputs,
             outputs,
-            SExpressionList("", []),
+            raw_data,
             [],
             BoundingBox(ul_corner, lr_corner),
         )
@@ -114,13 +121,16 @@ def xschem_to_il(library_dir: List[os.DirEntry]):
     for file in library_dir:
         if file.is_file() and os.path.splitext(file.path)[-1] == ".sym":
             symbol_name = os.path.splitext(os.path.split(file.path)[-1])[0]
-            with open(os.path.join(script_dir, "xschem.lark")) as grammar:
-                parser = Lark(
-                    grammar.read() + "\n",
-                    parser="lalr",
-                    transformer=XSchemSymbolTransformer(symbol_name),
-                    start="file",
-                )
             with open(file.path) as sym_file:
+                with open(os.path.join(script_dir, "xschem.lark")) as grammar:
+                    parser = Lark(
+                        grammar.read() + "\n",
+                        parser="lalr",
+                        transformer=XSchemSymbolTransformer(
+                            symbol_name, sym_file.read().strip()
+                        ),
+                        start="file",
+                    )
+                sym_file.seek(0)
                 res.symbols[symbol_name] = parser.parse(sym_file.read())
     return res

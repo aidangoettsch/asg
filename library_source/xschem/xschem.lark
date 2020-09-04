@@ -18,12 +18,12 @@ block: "{" (block_member | WS)* "}"
 
 statement_prefix: "v" -> version
                 | "G" -> general_info
-                | "V" -> idk1
-                | "S" -> idk2
-                | "E" -> idk3
-                | "P" -> idk4
+                | "V" -> verilog_netlist
+                | "S" -> spice_netlist
+                | "E" -> tedax_netlist
+                | "P" -> polygon
                 | "L" -> line
-                | "B" -> pin
+                | "B" -> rectangle
                 | "A" -> arc
 
 statement_body: number* block

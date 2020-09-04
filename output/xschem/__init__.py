@@ -56,11 +56,14 @@ def il_to_xschem(
         # |              0|              1|     1|          0|
         # |              1|              0|     1|          2|
         # |              1|              1|     0|          2|
+        # https://xschem.sourceforge.io/stefan/xschem_man/developer_info_03.png
 
         flip = (1 if component.mirrored_over_x else 0) ^ (
             1 if component.mirrored_over_y else 0
         )
         rotation = 2 if component.mirrored_over_x else 0
+
+        embedded_symbols = set()
 
         if type(component) == entities.CircuitInput:
             out.write(
@@ -75,8 +78,21 @@ def il_to_xschem(
                 f"{{lab={escape(component.identifier)}}}\n"
             )
         elif type(component) == entities.Cell:
-            out.write(
-                f"C {{{library_prefix}{component.human_name}.sym}} {gridify(component.location.x)} {gridify(component.location.y)} "
-                f"{rotation} {flip} "
-                f"{{name={escape(component.netlist_id)} VCCPIN={options['vcc_pin']} VSSPIN={options['vss_pin']}}}\n"
-            )
+            if (
+                options["embed_symbols"]
+                and component.human_name not in embedded_symbols
+            ):
+                embedded_symbols.add(component.human_name)
+                out.write(
+                    f"C {{{library_prefix}{component.human_name}.sym}} {gridify(component.location.x)} {gridify(component.location.y)} "
+                    f"{rotation} {flip} "
+                    f"{{name={escape(component.netlist_id)} VCCPIN={options['vcc_pin']} VSSPIN={options['vss_pin']} "
+                    f"embed=true}}\n"
+                    f"[\n{component.raw_data}\n]\n"
+                )
+            else:
+                out.write(
+                    f"C {{{library_prefix}{component.human_name}.sym}} {gridify(component.location.x)} {gridify(component.location.y)} "
+                    f"{rotation} {flip} "
+                    f"{{name={escape(component.netlist_id)} VCCPIN={options['vcc_pin']} VSSPIN={options['vss_pin']}\n"
+                )

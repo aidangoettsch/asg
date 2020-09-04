@@ -36,6 +36,13 @@ def main():
         "a directory instead of a list",
     )
     parser.add_argument(
+        "-e",
+        "--no-embed-symbols",
+        dest="embed_symbols",
+        action="store_false",
+        help="don't embed symbols in xschem schematic output",
+    )
+    parser.add_argument(
         "-D",
         "--debug",
         help="output intermediate steps of the ASG to ./out/",
@@ -51,6 +58,7 @@ def main():
             "include_library_name": args.include_library_name,
             "vcc_pin": args.vcc,
             "vss_pin": args.vss,
+            "embed_symbols": args.embed_symbols,
         },
     }
 

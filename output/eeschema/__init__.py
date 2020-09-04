@@ -99,7 +99,7 @@ def il_to_eeschema(
     inp: intermediate_lang.OutputIL, out, library: intermediate_lang.LibraryIL
 ):
     symbols_used = set(
-        library.symbols[component.human_name].s_expression
+        library.symbols[component.human_name].raw_data
         for component in inp.components
         if type(component) == entities.Cell
     )
