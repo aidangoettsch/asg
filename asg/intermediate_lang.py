@@ -1,4 +1,4 @@
-from entities import *
+from asg.entities import *
 from typing import List
 from bentley_ottmann.planar import segments_intersections
 

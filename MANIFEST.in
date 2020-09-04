@@ -1,0 +1,3 @@
+include asg/input/spice/spice.lark
+include asg/library_source/kicad_symbol_lib/s_expression.lark
+include asg/library_source/xschem/xschem.lark

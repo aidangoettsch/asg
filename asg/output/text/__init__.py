@@ -1,4 +1,4 @@
-import intermediate_lang
+import asg.intermediate_lang as intermediate_lang
 
 
 def il_to_markdown(output_il: intermediate_lang.OutputIL, output_file) -> None:

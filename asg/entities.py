@@ -1,4 +1,4 @@
-from grammar import *
+from asg.grammar import *
 from typing import List, Tuple, Dict, Union
 
 

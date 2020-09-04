@@ -1,7 +1,8 @@
 from abc import abstractmethod
+from typing import Tuple
 import numpy
-from intermediate_lang import *
-from entities import *
+from asg.intermediate_lang import *
+from asg.entities import *
 import itertools
 
 

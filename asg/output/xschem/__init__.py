@@ -1,5 +1,5 @@
-import intermediate_lang
-import entities
+import asg.intermediate_lang as intermediate_lang
+import asg.entities as entities
 
 
 def round_to_nearest(n, to=10):

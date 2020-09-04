@@ -1,8 +1,8 @@
-from intermediate_lang import *
-from entities import *
+from asg.intermediate_lang import *
+from asg.entities import *
 from lark import Lark, Transformer
 import os
-from grammar import *
+from asg.grammar import *
 
 
 class SExpressionTransformer(Transformer):

@@ -1,9 +1,9 @@
 import uuid
 from typing import Tuple
 
-import intermediate_lang
-import entities
-from grammar import *
+import asg.intermediate_lang as intermediate_lang
+import asg.entities as entities
+from asg.grammar import *
 
 
 class SchematicElement(SExpressionList):

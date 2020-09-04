@@ -1,8 +1,7 @@
 from abc import abstractmethod
 from typing import Dict
-
-from intermediate_lang import *
-from entities import *
+from asg.intermediate_lang import *
+from asg.entities import *
 from lark import Lark, Transformer
 import os
 import itertools
