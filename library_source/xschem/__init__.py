@@ -71,7 +71,10 @@ class XSchemSymbolTransformer(Transformer):
                                 properties_dict[prop[0].value] = prop[1].value
 
                         # Skip rectangles that don't look like pins
-                        if "name" not in properties or "dir" not in properties:
+                        if (
+                            "name" not in properties_dict
+                            or "dir" not in properties_dict
+                        ):
                             continue
 
                         body = body[:-1]
