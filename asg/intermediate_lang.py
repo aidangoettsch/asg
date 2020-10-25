@@ -1,6 +1,8 @@
 from asg.entities import *
 from typing import List
 from bentley_ottmann.planar import segments_intersections
+import numpy as np
+import itertools
 
 
 class InputIL:
@@ -22,6 +24,50 @@ class InputIL:
         self.components = components
         self.connections = connections
         self.inouts = inouts
+
+
+def get_segment_slope(segment: Tuple[Point]):
+    """
+    Find the slope of a line segment
+    :param segment: A pair of points that represent a line segment
+    :return: The slope of segment
+    """
+    return (
+        (segment[0].y - segment[1].y) / (segment[0].x - segment[1].x)
+        if (segment[0].x - segment[1].x) != 0
+        else float("inf")
+    )
+
+
+def point_cross_product(point_1, point_2):
+    return point_1.x * point_2.y - point_2.x * point_1.y
+
+
+def point_loc_relative_to_line(segment, point):
+    segment_second_prime = Point(
+        segment[1].x - segment[0].x, segment[1].y - segment[0].y
+    )
+    point_prime = Point(point.x - segment[0].x, point.y - segment[0].y)
+    r = point_cross_product(segment_second_prime, point_prime)
+    return r if r == 0 else np.sign(r)
+
+
+def a_sandwiches_b(segment_a, segment_b):
+    b_0 = point_loc_relative_to_line(segment_b, segment_a[0])
+    b_1 = point_loc_relative_to_line(segment_b, segment_a[1])
+
+    return b_0 != b_1 and b_0 != 0 and b_1 != 0
+
+
+def check_cross(segment_1, segment_2):
+    slope_1 = get_segment_slope(segment_1)
+    slope_2 = get_segment_slope(segment_2)
+    if slope_1 == slope_2:
+        return BoundingBox.from_line_segment(segment_1).intersects(
+            BoundingBox.from_line_segment(segment_2)
+        )
+
+    return a_sandwiches_b(segment_1, segment_2) and a_sandwiches_b(segment_2, segment_1)
 
 
 class OutputIL:
@@ -111,19 +157,19 @@ class OutputIL:
         self.line_bins = {}
         for line in self.lines:
             for segment in line.line_segments:
-                bin_1 = segment[0] / bin_size
-                bin_2 = segment[0] / bin_size
+                bin_1 = segment[0] // bin_size
+                bin_2 = segment[1] // bin_size
                 if bin_1 == bin_2:
                     bins = [bin_1]
                 else:
-                    bins = [bin_2]
-                    for bin_x in range(bin_1.x, bin_2.x):
-                        for bin_y in range(bin_1.y, bin_2.y):
+                    bins = []
+                    for bin_x in range(bin_1.x, bin_2.x + 1):
+                        for bin_y in range(bin_1.y, bin_2.y + 1):
                             bins.append(Point(bin_x, bin_y))
                 for line_bin in bins:
-                    if bin_1 not in self.line_bins:
-                        self.line_bins[line_bin] = []
-                    self.line_bins[line_bin].append(line)
+                    if line_bin not in self.line_bins:
+                        self.line_bins[line_bin] = set()
+                    self.line_bins[line_bin].add(line)
 
     def get_line_intersects_line(self) -> List[List[Line]]:
         """
@@ -131,18 +177,32 @@ class OutputIL:
         :return: A list of line segment pairs
         """
         intersections = []
-        for line_bin in self.line_bins.values():
-            segments = []
-            line_idx_map = []
-            for line in line_bin:
-                for segment in line.line_segments:
-                    if segment[0] != segment[1]:
-                        segments.append((segment[0].as_tuple(), segment[1].as_tuple()))
-                        line_idx_map.append(line)
 
-            for collision_point in segments_intersections(segments).values():
-                for intersection in collision_point:
-                    intersections.append([line_idx_map[i] for i in intersection])
+        for line_bin in self.line_bins.values():
+            for connection_pair in itertools.combinations(line_bin, 2):
+                line_segments = (
+                    connection_pair[0].line_segments + connection_pair[1].line_segments
+                )
+
+                for segment_pair in itertools.combinations(line_segments, 2):
+                    if check_cross(segment_pair[0], segment_pair[1]):
+                        intersections.append(connection_pair)
+        # for line_bin in self.line_bins.values():
+        #     segments = []
+        #     line_idx_map = []
+        #     for line_1, line_2 in itertools.combinations(line_bin, 2):
+        #         for segment in line_1.line_segments:
+        #             if segment[0] != segment[1]:
+        #                 line_idx_map.append(line_1)
+        #                 segments.append(((segment[0].x, segment[0].y), (segment[1].x, segment[1].y)))
+        #         for segment in line_2.line_segments:
+        #             if segment[0] != segment[1]:
+        #                 line_idx_map.append(line_2)
+        #                 segments.append(((segment[0].x, segment[0].y), (segment[1].x, segment[1].y)))
+        #
+        #     for collision_point in segments_intersections(segments).values():
+        #         for intersection in collision_point:
+        #             intersections.append([line_idx_map[i] for i in intersection])
         return intersections
 
 

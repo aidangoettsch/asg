@@ -6,7 +6,7 @@ import asg.entities as entities
 from asg.grammar import *
 
 
-class SchematicElement(SExpressionList):
+class SchematicElement(Atom):
     def __init__(self, name, children):
         super().__init__(name, children)
 
@@ -128,7 +128,7 @@ def il_to_eeschema(
         str(
             Schematic(
                 [lib_symbols]
-                + components
+                + [e for e in components if e is not None]
                 + [
                     SchematicWire(segment)
                     for line in inp.lines

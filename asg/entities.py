@@ -40,6 +40,15 @@ class Point:
         """
         return Point(self.x / other, self.y / other)
 
+    def __floordiv__(self, other: float):
+        """
+        Shift the point closer to the origin by a factor of other, with
+        x and y rounded to the nearest integer
+        :param other: Scalar to divide by
+        :return: A point divided by the scalar other
+        """
+        return Point(int(self.x // other), int(self.y // other))
+
     def __eq__(self, other: "Point"):
         """
         Check if two points are equal to each other
@@ -274,10 +283,10 @@ class LibraryProperty:
     def __init__(
         self,
         key: str,
-        value: SExpressionList or str,
+        value: Atom or str,
         ident: str,
         location: Tuple[float],
-        effects: List[SExpressionList],
+        effects: List[Atom],
     ):
         """
         Create a library property
@@ -293,19 +302,19 @@ class LibraryProperty:
         self.location = location
         self.effects = effects
 
-    def to_s_expression(self, location_offset: Point) -> SExpressionList:
+    def to_s_expression(self, location_offset: Point) -> Atom:
         """
         Transforms the property into an s-expression with an offset applied to its location
         :param location_offset: The location of the component this property belongs to
         :return: An s-expression which represents this property at the appropriate location
         """
-        return SExpressionList(
+        return Atom(
             "property",
             [
                 self.key,
                 self.value,
-                SExpressionList("id", [self.id]),
-                SExpressionList(
+                Atom("id", [self.id]),
+                Atom(
                     "at",
                     [
                         self.location[0] + location_offset.x,
@@ -313,11 +322,7 @@ class LibraryProperty:
                         self.location[2],
                     ],
                 ),
-                *(
-                    [SExpressionList("effects", self.effects)]
-                    if self.effects != []
-                    else []
-                ),
+                *([Atom("effects", self.effects)] if self.effects != [] else []),
             ],
         )
 
@@ -334,7 +339,7 @@ class LibrarySymbol:
         pin_locations: Dict[int, Point],
         inputs: List[int],
         outputs: List[int],
-        raw_data: Union[SExpressionList, str],
+        raw_data: Union[Atom, str],
         properties: List[LibraryProperty],
         bounding_box: BoundingBox,
     ):

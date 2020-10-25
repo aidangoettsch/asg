@@ -165,7 +165,7 @@ class InputYDegridConstraint(Constraint):
         error = 0
         for i, inp in enumerate(self.output.components):
             if type(inp) == CircuitInput:
-                error += inp.location.y - self.find_optimal_y(i)
+                error += abs(inp.location.y - self.find_optimal_y(i))
         return -error
 
     def maximize(self):
@@ -180,17 +180,67 @@ class UntangleConstraint(Constraint):
 
     def maximize(self):
         for crossing in self.output.get_line_intersects_line():
-            # prev_score = self.get_score()
             if crossing[0].connection.end_entity == crossing[1].connection.end_entity:
+                prev_crosses = 0
+                component = self.output.components[crossing[0].connection.end_entity]
+                connecting_lines = []
+                line_bin_loc = component.location // self.options["bin_size"]
+                try:
+                    connecting_lines += self.output.line_bins[line_bin_loc]
+                except:
+                    pass
+                try:
+                    connecting_lines += self.output.line_bins[
+                        line_bin_loc + Point(1, 0)
+                    ]
+                except:
+                    pass
+                try:
+                    connecting_lines += self.output.line_bins[
+                        line_bin_loc + Point(0, 1)
+                    ]
+                except:
+                    pass
+                try:
+                    connecting_lines += self.output.line_bins[
+                        line_bin_loc + Point(-1, 0)
+                    ]
+                except:
+                    pass
+                try:
+                    connecting_lines += self.output.line_bins[
+                        line_bin_loc + Point(0, -1)
+                    ]
+                except:
+                    pass
+                for connection_pair in itertools.combinations(connecting_lines, 2):
+                    line_segments = (
+                        connection_pair[0].line_segments
+                        + connection_pair[1].line_segments
+                    )
+
+                    for segment_pair in itertools.combinations(line_segments, 2):
+                        if check_cross(segment_pair[0], segment_pair[1]):
+                            prev_crosses += 1
                 self.output.components[
                     crossing[0].connection.end_entity
                 ].mirror_over_x()
                 self.output.repair_lines()
-            # if prev_score > self.get_score():
-            #     self.output.components[
-            #         crossing[0].connection.end_entity
-            #     ].mirror_over_x()
-            #     self.output.repair_lines()
+                new_crosses = 0
+                for connection_pair in itertools.combinations(connecting_lines, 2):
+                    line_segments = (
+                        connection_pair[0].line_segments
+                        + connection_pair[1].line_segments
+                    )
+
+                    for segment_pair in itertools.combinations(line_segments, 2):
+                        if check_cross(segment_pair[0], segment_pair[1]):
+                            new_crosses += 1
+                if new_crosses > prev_crosses:
+                    self.output.components[
+                        crossing[0].connection.end_entity
+                    ].mirror_over_x()
+                    self.output.repair_lines()
 
 
 class LinesAvoidBoundingBoxes(Constraint):
@@ -275,8 +325,12 @@ class ComponentsAvoidOthers(Constraint):
         return -len(self.find_intersections())
 
     def maximize(self):
-        for intersection in self.find_intersections():
-            intersection[1].location += Point(0, self.options["row_gap"])
+        while len(intersections := self.find_intersections()) != 0:
+            for intersection in intersections:
+                if intersection[0].location.y > intersection[1].location.y:
+                    intersection[0].location += Point(0, self.options["row_gap"])
+                else:
+                    intersection[1].location += Point(0, self.options["row_gap"])
 
 
 class LinesAvoidOthers(Constraint):
@@ -303,62 +357,35 @@ class LinesAvoidOthers(Constraint):
                                 and segment_2_is_end
                             )
                         ):
-                            res.append(
-                                (
-                                    *line_pair,
-                                    get_segment_slope(segment_1),
-                                    get_segment_length(segment_1),
-                                    get_segment_length(segment_2),
-                                )
-                            )
+                            res.append((*line_pair, segment_1, segment_2))
         return res
 
     def get_score(self):
         return -len(self.find_intersections())
 
     def maximize(self):
-        for intersection in self.find_intersections():
-            if (
-                len(intersection[0].locations) == 2
-                or len(intersection[1].locations) == 2
-            ):
+        for line_1, line_2, segment_1, segment_2 in self.find_intersections():
+            if len(line_1.locations) == 2 or len(line_2.locations) == 2:
                 continue
-            if intersection[2] == 0:
-                intersection[0].locations[1] += Point(
-                    0, -self.options["min_line_spacing"]
-                )
-                intersection[0].locations[2] += Point(
-                    0, -self.options["min_line_spacing"]
-                )
-                intersection[1].locations[1] += Point(
-                    0, self.options["min_line_spacing"]
-                )
-                intersection[1].locations[2] += Point(
-                    0, self.options["min_line_spacing"]
-                )
-            elif intersection[3] > intersection[4]:
-                intersection[0].locations[1] += Point(
-                    -self.options["min_line_spacing"], 0
-                )
-                intersection[0].locations[2] += Point(
-                    -self.options["min_line_spacing"], 0
-                )
-                intersection[1].locations[1] += Point(
-                    self.options["min_line_spacing"], 0
-                )
-                intersection[1].locations[2] += Point(
-                    self.options["min_line_spacing"], 0
-                )
+            if segment_1[0].y > segment_1[1].y != segment_2[0].y > segment_2[1].y:
+                # TODO: handle crossover better when lines are mirror images
+                line_1.locations[1] += Point(self.options["min_line_spacing"], 0)
+                line_1.locations[2] += Point(self.options["min_line_spacing"], 0)
+            elif segment_1[0].y > segment_1[1].y:
+                if segment_1[1].y > segment_2[1].y:
+                    # segment_2 is on the inside
+                    segment_2[0].x += self.options["min_line_spacing"]
+                    segment_2[1].x += self.options["min_line_spacing"]
+                else:
+                    # segment_1 is on the inside
+                    segment_1[0].x += self.options["min_line_spacing"]
+                    segment_1[1].x += self.options["min_line_spacing"]
             else:
-                intersection[0].locations[1] += Point(
-                    self.options["min_line_spacing"], 0
-                )
-                intersection[0].locations[2] += Point(
-                    self.options["min_line_spacing"], 0
-                )
-                intersection[1].locations[1] += Point(
-                    -self.options["min_line_spacing"], 0
-                )
-                intersection[1].locations[2] += Point(
-                    -self.options["min_line_spacing"], 0
-                )
+                if segment_1[1].y < segment_2[1].y:
+                    # segment_1 is on the inside
+                    segment_1[0].x += self.options["min_line_spacing"]
+                    segment_1[1].x += self.options["min_line_spacing"]
+                else:
+                    # segment_2 is on the inside
+                    segment_2[0].x += self.options["min_line_spacing"]
+                    segment_2[1].x += self.options["min_line_spacing"]

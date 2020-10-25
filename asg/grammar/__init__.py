@@ -1,7 +1,9 @@
-class SExpressionList:
+class Atom:
     def __init__(self, name, children):
         self.name = name
         self.children = children
+        if None in children:
+            raise Exception("none in lisp atom")
 
     def __str__(self):
         child_string = " ".join(

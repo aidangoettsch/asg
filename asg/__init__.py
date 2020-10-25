@@ -49,7 +49,7 @@ def main():
 
     options = {
         "asg": {},
-        "input": {"depth": args.depth, "filter_power": [args.vcc, args.vss],},
+        "input": {"depth": args.depth, "filter_power": [args.vcc, args.vss]},
         "output": {
             "include_library_name": args.include_library_name,
             "vcc_pin": args.vcc,

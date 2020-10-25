@@ -6,10 +6,10 @@ import copy
 
 constraint_weights = {
     LTRConstraint: 10,
-    VerticalSortConstraint: 3,
+    VerticalSortConstraint: 0,
     InputYDegridConstraint: 10,
-    LinesAvoidOthers: 20,
     UntangleConstraint: 10,
+    LinesAvoidOthers: 20,
     LinesAvoidBoundingBoxes: 20,
     ComponentsAvoidOthers: 100,
 }
@@ -35,9 +35,11 @@ def constraint_asg(inp, options_override=None):
         "starting_y": 250,
         "column_gap": 250,
         "row_gap": 250,
-        "min_line_spacing": 10,
-        "bounding_box_extension": 20,
+        "min_line_spacing": 20,
+        "bounding_box_extension": 30,
         "bin_size": 100,
+        "epsilon": 0.1,
+        "distance_from_peak": 10,
     }
     dict.update(options, options_override)
 
@@ -69,15 +71,15 @@ def constraint_asg(inp, options_override=None):
     res.repair_lines()
     res.create_line_bins(options["bin_size"])
     peak_score, peak_score_breakdown = calculate_score(constraint_instances)
-    for constraint in peak_score_breakdown:
-        print(constraint[0].__name__, constraint[1])
-    while distance_from_peak < 6:
+    # for constraint in peak_score_breakdown:
+    #     print(constraint[0].__name__, constraint[1])
+    while distance_from_peak < options["distance_from_peak"]:
         constraint = constraint_instances[(i % (len(constraint_instances) - 1)) + 1]
         constraint.maximize()
         res.repair_lines()
         res.create_line_bins(options["bin_size"])
         score, score_breakdown = calculate_score(constraint_instances)
-        if score - peak_score > 0.1:
+        if score - peak_score > options["epsilon"]:
             peak_score = score
             distance_from_peak = 1
             distance_from_actual_peak = 1
@@ -93,7 +95,8 @@ def constraint_asg(inp, options_override=None):
         score_history.append((constraint, score, copy.deepcopy(res)))
         i += 1
     res = score_history[-distance_from_actual_peak]
-    print("Best:", type(res[0]).__name__, res[1])
+    best_score = res[1]
+    # print("Best:", type(res[0]).__name__, res[1])
     res = res[2]
 
-    return res, score_history
+    return res, score_history, best_score

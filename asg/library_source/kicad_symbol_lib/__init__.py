@@ -26,7 +26,7 @@ class SExpressionTransformer(Transformer):
             return int(num[0].value)
 
     def list(self, l):
-        return SExpressionList(l[0], l[1:])
+        return Atom(l[0], l[1:])
 
 
 def symbol_to_il(symbol):
@@ -40,7 +40,7 @@ def symbol_to_il(symbol):
     lr_corner = Point(0, 0)
 
     for prop in symbol.children:
-        if type(prop) != SExpressionList:
+        if type(prop) != Atom:
             continue
         if prop.name == "property":
             property_key = prop.children[0]
@@ -50,7 +50,7 @@ def symbol_to_il(symbol):
             property_effects = []
 
             for c in prop.children:
-                if type(c) != SExpressionList:
+                if type(c) != Atom:
                     continue
                 if c.name == "id":
                     property_id = c.children[0]
@@ -71,7 +71,7 @@ def symbol_to_il(symbol):
             name = prop.children[1]
         if prop.name == "symbol":
             for element in prop.children:
-                if type(element) != SExpressionList:
+                if type(element) != Atom:
                     continue
                 if element.name == "pin":
                     pin_name = -1
@@ -79,7 +79,7 @@ def symbol_to_il(symbol):
 
                     pin_type = element.children[0]
                     for attr in element.children:
-                        if type(attr) != SExpressionList:
+                        if type(attr) != Atom:
                             continue
                         if attr.name == "at":
                             pin_location = Point(attr.children[0], -attr.children[1])

@@ -129,7 +129,7 @@ class SPICETransformer(Transformer):
                 {},
                 [],
                 [],
-                SExpressionList("", []),
+                Atom("", []),
                 [],
                 BoundingBox(Point(0, 0), Point(0, 0)),
             )

@@ -18,7 +18,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requirements=["numpy", "lark-parser", "bentley_ottmann",],
-    entry_points={"console_scripts": ["asg=asg.__init__:main"],},
+    entry_points={"console_scripts": ["asg=asg.__main__:main"]},
     include_package_data=True,
     python_requires=">=3.6",
 )
